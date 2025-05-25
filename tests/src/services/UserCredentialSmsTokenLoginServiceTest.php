@@ -1,5 +1,4 @@
 <?php
-
 namespace rhossis\core\application\authentication\UserCredential\services;
 
 /**
@@ -11,6 +10,11 @@ class UserCredentialSmsTokenLoginServiceTest extends \PHPUnit\Framework\TestCase
      * @var UserCredentialSmsTotpService
      */
     protected $object;
+
+    /**
+     * @var password
+     */
+    protected $password;
 
     /**
      * Sets up the fixture, for example, opens a network connection.

@@ -134,24 +134,25 @@ class UserCredentialPasswordLoginServiceTest extends \PHPUnit\Framework\TestCase
         } else {
             $this->object->setPasswordAuthenticationPlatform(\USERCREDENTIAL_PASSWORDLOGINPLATFORM_LDAP);
 
-            $ldapSettings = array();
-            $ldapSettings['ldap_account_suffix'] = '';
-            $ldapSettings['ad_password'] = 'password';
-            $ldapSettings['ad_username'] = 'cn=read-only-admin,dc=example,dc=com';
-            $ldapSettings['base_dn'] = '';
-            $ldapSettings['cn_identifier'] = 'TEST';
-            $ldapSettings['domain_controllers'] = $domainControllers;
-            $ldapSettings['group_attribute'] = 'dc=example,dc=com';
-            $ldapSettings['group_cn_identifier'] = 'cn';
-            $ldapSettings['ldap_server_type'] = 1;
-            $ldapSettings['network_timeout'] = 1;
-            $ldapSettings['port'] = 389;
-            $ldapSettings['recursive_groups'] = 1;
-            $ldapSettings['time_limit'] = 30;
-            $ldapSettings['use_ssl'] = 0;
-            $ldapSettings['cache_support'] = 0;
-            $ldapSettings['cache_folder'] = '';
-            $ldapSettings['expired_password_valid'] = '';
+            $ldapSettings = [
+                'ldap_account_suffix'    => '', // not needed for this LDAP
+                'ad_password'            => 'password',
+                'ad_username'            => 'cn=read-only-admin,dc=example,dc=com',
+                'base_dn'                => 'dc=example,dc=com', // Required
+                'cn_identifier'          => 'cn', // typically used for user CN matching
+                'domain_controllers'     => 'ldap.forumsys.com', // host(s)
+                'group_attribute'        => 'memberOf', // standard LDAP group attribute
+                'group_cn_identifier'    => 'cn',
+                'ldap_server_type'       => 1, // if used by your code
+                'network_timeout'        => 1,
+                'port'                   => 389,
+                'recursive_groups'       => 1,
+                'time_limit'             => 30,
+                'use_ssl'                => 0, // do NOT use SSL for forumsys
+                'cache_support'          => 0,
+                'cache_folder'           => '',
+                'expired_password_valid' => false, // clarify based on how it's used
+            ];
 
             $this->object->setCurrentUserName($ldapSettings['ad_username']);
             $this->object->setCurrentPassword($ldapSettings['ad_password']);  
