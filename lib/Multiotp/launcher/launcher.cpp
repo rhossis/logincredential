@@ -3,28 +3,28 @@
  * @brief Launcher for the multiOTP open source embedded CLI package
  *
  * multiOTP C++ launcher - Strong two-factor authentication solution
- * http://www.multiotp.net
+ * https://www\.multiOTP.net
  *
  * Visit http://forum.multiotp.net/ for additional support.
  *
- * Donation are always welcome! Please check http://www.multiotp.net
+ * Donation are always welcome! Please check https://www\.multiOTP.net
  * and you will find the magic button ;-)
  *
  * The multiOTP C++ launcher is simply used to launch PHP
  * and run multiotp.windows.php with the provided arguments.
  *
  * @author    Andre Liechti, SysCo systemes de communication sa, <info@multiotp.net>
- * @version   5.6.1.5
- * @date      2019-10-23
+ * @version   5.9.9.1
+ * @date      2025-01-20
  * @since     2016-12-08
- * @copyright (c) 2010-2019 SysCo systemes de communication sa
+ * @copyright (c) 2010-2025 SysCo systemes de communication sa
  * @copyright GNU Lesser General Public License
  *
  *//*
  *
  * LICENCE
  *
- *   Copyright (c) 2010-2019 SysCo systemes de communication sa
+ *   Copyright (c) 2010-2025 SysCo systemes de communication sa
  *   SysCo (tm) is a trademark of SysCo systemes de communication sa
  *   (http://www.sysco.ch)
  *   All rights reserved.
@@ -68,8 +68,18 @@
 #include <iostream>
 
 #define SOFTWARE    "LAUNCHPHPMULTIOTP"
-#define VER_NUMBER  "5.6.1.5"
-#define VER_DATE    "2019-10-23"
+#define VER_NUMBER  "5.9.9.1"
+#define VER_DATE    "2025-01-20"
+
+void replaceAll(std::string& str, const std::string& from, const std::string& to) {
+    if (from.empty())
+        return;
+    size_t start_pos = 0;
+    while ((start_pos = str.find(from, start_pos)) != std::string::npos) {
+        str.replace(start_pos, from.length(), to);
+        start_pos += to.length(); // In case 'to' contains 'from', like replacing 'x' with 'yx'
+    }
+}
 
 int _tmain(int argc, _TCHAR* argv[])
 {
@@ -92,9 +102,12 @@ int _tmain(int argc, _TCHAR* argv[])
   // strcat_s(defaultPath, "php");
 
   std::string run_software = pathToPhp + " " + pathToMultiotp + " -base-dir=" + quote + basePath + "." + quote;
-
+  std::string escapedArgv;
   for (int i = 1; i < argc; i = i + 1) {
-      run_software = run_software + " " + quote + argv[i] + quote;
+      escapedArgv = argv[i];
+      replaceAll(escapedArgv, "\"", "\\\"");
+      replaceAll(escapedArgv, "&", "^&");
+      run_software = run_software + " " + quote + escapedArgv + quote;
   }
 
   // Put the run software between quotes, because system use CMD /K

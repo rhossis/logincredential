@@ -4,11 +4,11 @@
  * @brief Check the implementation of some multiOTP functionalities
  *
  * multiOTP - Strong two-factor authentication PHP class package
- * http://www.multiotp.net
+ * https://www.multiotp.net
  *
  * Visit http://forum.multiotp.net/ for additional support.
  *
- * Donation are always welcome! Please check http://www.multiotp.net
+ * Donation are always welcome! Please check https://www.multiotp.net
  * and you will find the magic button ;-)
  *
  *
@@ -19,20 +19,20 @@
  * WARNING! DO NOT FORGET TO REMOVE this test file from your disk when you go in production !
  *
  *
- * PHP 5.3.0 or higher is supported.
+ * PHP 5.4.0 or higher is supported.
  *
  * @author    Andre Liechti, SysCo systemes de communication sa, <info@multiotp.net>
- * @version   5.6.1.5
- * @date      2019-10-23
+ * @version   5.9.9.1
+ * @date      2025-01-20
  * @since     2013-07-10
- * @copyright (c) 2013-2019 SysCo systemes de communication sa
+ * @copyright (c) 2013-2025 SysCo systemes de communication sa
  * @copyright GNU Lesser General Public License
  *
  *//*
  *
  * LICENCE
  *
- *   Copyright (c) 2013-2019 SysCo systemes de communication sa
+ *   Copyright (c) 2013-2025 SysCo systemes de communication sa
  *   SysCo (tm) is a trademark of SysCo systemes de communication sa
  *   (http://www.sysco.ch/)
  *   All rights reserved.
@@ -71,6 +71,7 @@
  *
  * Change Log
  *
+ *   2020-08-31 5.8.0.0 SysCo/al By default, clean log before test
  *   2019-10-23 5.6.1.4 SysCo/al Additional tests included
  *   2017-06-02 5.0.4.6 SysCo/al Enhanced tests display
  *   2017-05-29 5.0.4.5 SysCo/al Additional PostgreSQL backend included
@@ -122,24 +123,38 @@ set_time_limit(3600);
 $first_time = time();
 
 if (!isset($GLOBALS['minima'])) {
+  if (isset($_GET['minima'])) {
     $GLOBALS['minima'] = isset($_GET['minima']);
+  } else {
+    $GLOBALS['minima'] = false;
+  }
 }
 
 if (!isset($GLOBALS['keeplog'])) {
+  if (isset($_GET['keeplog'])) {
     $GLOBALS['keeplog'] = isset($_GET['keeplog']);
+  } else {
+    $GLOBALS['keeplog'] = false;
+  }
 }
 
 if (!isset($GLOBALS['noresume'])) {
+  if (isset($_GET['noresume'])) {
     $GLOBALS['noresume'] = isset($_GET['noresume']);
+  } else {
+    $GLOBALS['noresume'] = false;
+  }
 }
 
+$test_mail = isset($GLOBALS['test_mail'])?$GLOBALS['test_mail']:'';
+
 if (!function_exists('echo_full')) {
-    function echo_full($to_display) {
-        if (!$GLOBALS['minima']) {
-            @ob_end_flush();
-            echo $to_display;
-        }
+  function echo_full($to_display) {
+    if (!$GLOBALS['minima']) {
+      @ob_end_flush();
+      echo $to_display;
     }
+  }
 }
 
 require_once('multiotp.class.php');
@@ -373,20 +388,31 @@ foreach ($backend_array as $backend) {
 
 
     if (!isset($GLOBALS['keeplog'])) {
+      if (isset($GLOBALS['eraselog'])) {
         //====================================================================
-        // TEST: Clear the log
+        // TEST: Clear completely the log
         $tests++;
-        echo_full($b_on."Clear the log".$b_off.$crlf);
-        if ($multiotp->ClearLog())
-        {
-            echo_full("- ".$ok_on.'OK!'.$ok_off." Log successfully cleared".$crlf);
-            $successes++;
-        }
-        else
-        {
-            echo_full("- ".$ko_on.'KO!'.$ko_off." Unable to clear the log".$crlf);
+        echo_full($b_on."Clear the log completely".$b_off.$crlf);
+        if ($multiotp->ClearLog()) {
+          echo_full("- ".$ok_on.'OK!'.$ok_off." Log successfully cleared".$crlf);
+          $successes++;
+        } else {
+          echo_full("- ".$ko_on.'KO!'.$ko_off." Unable to clear the log".$crlf);
         }
         echo_full($crlf);
+      } else {
+        //====================================================================
+        // TEST: Clear the log (keep last 2 days)
+        $tests++;
+        echo_full($b_on."Clear the log".$b_off.$crlf);
+        if ($multiotp->ClearLog(2)) {
+          echo_full("- ".$ok_on.'OK!'.$ok_off." Log successfully cleared (keep the last 2 days)".$crlf);
+          $successes++;
+        } else {
+          echo_full("- ".$ko_on.'KO!'.$ko_off." Unable to clear the log".$crlf);
+        }
+        echo_full($crlf);
+      }
     }
 
 
@@ -497,7 +523,7 @@ foreach ($backend_array as $backend) {
     echo_full($crlf);
 
 
-   //====================================================================
+    //====================================================================
     // Delete the user test_user if it exists
     echo_full($i_on);
     echo_full("Deleting the test_user".$crlf);
@@ -513,7 +539,7 @@ foreach ($backend_array as $backend) {
     echo_full($crlf);
 
 
-   //====================================================================
+    //====================================================================
     // Delete the user test_user twice if it exists
     echo_full($i_on);
     echo_full("Deleting the test_user (twice)".$crlf);
@@ -529,7 +555,7 @@ foreach ($backend_array as $backend) {
     echo_full($crlf);
 
 
-   //====================================================================
+    //====================================================================
     // Delete the user test_totp if it exists
     echo_full($i_on);
     echo_full("Deleting the test_totp".$crlf);
@@ -545,7 +571,7 @@ foreach ($backend_array as $backend) {
     echo_full($crlf);
 
 
-   //====================================================================
+    //====================================================================
     //====================================================================
     // Delete the token test_token if it exists
     echo_full($i_on);
@@ -562,7 +588,7 @@ foreach ($backend_array as $backend) {
     echo_full($crlf);
 
 
-   //====================================================================
+    //====================================================================
     //====================================================================
     // Delete the token test_token_totp if it exists
     echo_full($i_on);
@@ -772,6 +798,26 @@ foreach ($backend_array as $backend) {
     echo_full($crlf);
 
 
+    //================================================
+    // TEST: Generate Email token for the current user
+    if ('' != $test_mail) {
+        $tests++;
+        echo_full($b_on."Generate Email token for user test_user".$b_off.$crlf);
+        $multiotp->SetUser('test_user');
+        $multiotp->SetEmailCodeAllowed(1);
+        $multiotp->SetUserEmail($test_mail);
+        $multiotp->WriteUserData();
+        $token_result = $multiotp->GenerateEmailToken();
+        if (18 == $token_result) {
+            echo_full("- ".$ok_on.'OK!'.$ok_off." Email token successfully generated".$crlf);
+            $successes++;
+        } else {
+            echo_full("- ".$ko_on.'KO!'.$ko_off." Email token generation failed, error $token_result.".$crlf);
+        }
+        echo_full($crlf);
+    }
+
+
     //====================================================================
     // Delete the user test_user8 if it exists
     echo_full($i_on);
@@ -906,6 +952,57 @@ foreach ($backend_array as $backend) {
 
 
     //====================================================================
+    // TEST: Deleting the testmail@mydomain.sub.net if it exists
+    echo_full($i_on);
+    echo_full("Deleting the testmail@mydomain".$crlf);
+    if (!$multiotp->DeleteUser('testmail@mydomain', TRUE))
+    {
+        echo_full("- INFO: User testmail@mydomain doesn't exist yet".$crlf);
+    }
+    else
+    {
+        echo_full("- INFO: User testmail@mydomain successfully deleted".$crlf);
+    }
+    echo_full($i_off);
+    echo_full($crlf);
+
+
+    //====================================================================
+    // TEST: Creating user testmail@mydomain with the RFC test values HOTP token and PIN prefix
+    $tests++;
+    echo_full($b_on."Creating user testmail@mydomain with the RFC test values HOTP token and PIN prefix".$b_off.$crlf);
+    if ($multiotp->CreateUser('testmail@mydomain',1,'HOTP','3132333435363738393031323334353637383930','*!1-2-3-4-5-6?*',6,0))
+    {
+        echo_full("- ".$ok_on.'OK!'.$ok_off." User testmail@mydomain successfully created".$crlf);
+        $successes++;
+    }
+    else
+    {
+        echo_full("- ".$ko_on.'KO!'.$ko_off." Creation of user testmail@mydomain failed".$crlf);
+    }
+    echo_full($crlf);
+
+
+    //====================================================================
+    // TEST: Authenticating testmail@mydomain.sub.net with the first token of the RFC test values with PIN
+    $tests++;
+    $test_user = 'testmail@mydomain.sub.net';
+    $real_user = $multiotp->FindRealUserName($test_user);
+    echo_full($b_on."Authenticating testmail@mydomain.sub.net with the first token of the RFC test values with PIN".$b_off.$crlf);
+    $multiotp->SetUser($real_user);
+    if (0 == ($error = $multiotp->CheckToken('*!1-2-3-4-5-6?*755224')))
+    {
+        echo_full("- ".$ok_on.'OK!'.$ok_off." Token of the real user $real_user (user $test_user) (with prefix PIN) successfully accepted".$crlf);
+        $successes++;
+    }
+    else
+    {
+        echo_full("- ".$ko_on.'KO!'.$ko_off." Error #".$error." authenticating real user $real_user (user $test_user) with the first token and PIN prefix".$crlf);
+    }
+    echo_full($crlf);
+
+
+    //====================================================================
     // Delete the user fast_user if it exists
     echo_full($i_on);
     echo_full("Deleting the user fast_user".$crlf);
@@ -1026,6 +1123,25 @@ foreach ($backend_array as $backend) {
         $successes++;
     } else {
         echo_full("- ".$ko_on.'KO!'.$ko_off." Authenticating user test_wo2fa with the incorrect prefix PIN accepted".$crlf);
+    }
+    echo_full($crlf);
+
+
+    //====================================================================
+    // TEST: GetActiveUsersCount with and without "without2FA" users
+    $tests++;
+    $multiotp->SetUser('test_wo2fa');
+    $multiotp->EnableUserRequestLdapPassword();
+    $multiotp->WriteUserData();
+    echo_full($b_on."GetActiveUsersCount with and without \"LDAP without 2FA\" users".$b_off.$crlf);
+    $with_2fa = $multiotp->GetActiveUsersCount(FALSE);
+    $without_2fa = $multiotp->GetActiveUsersCount(TRUE);
+    
+    if ($with_2fa > $without_2fa) {
+        echo_full("- ".$ok_on.'OK!'.$ok_off." GetActiveUsersCount check successful ($with_2fa/$without_2fa)".$crlf);
+        $successes++;
+    } else {
+        echo_full("- ".$ko_on.'KO!'.$ko_off." GetActiveUsersCount check error ($with_2fa/$without_2fa)".$crlf);
     }
     echo_full($crlf);
 
@@ -1157,7 +1273,8 @@ foreach ($backend_array as $backend) {
     // TEST: Creating a QRcode provisioning file for the HOTP RFC test token
     $tests++;
     echo_full($b_on."Creating a QRcode provisioning file for the HOTP RFC test token".$b_off.$crlf);
-    $size_result = $multiotp->qrcode('otpauth://hotp/multiOTP hotp test?counter=0&digits=6&secret='.base32_encode(hex2bin('3132333435363738393031323334353637383930')).'&issuer=multiOTP test', $multiotp->GetLogFolder().'qrHOTP.png');
+    $size_result = $multiotp->qrcode('otpauth://hotp/multiOTP%20test:multiOTP%20hotp%20test?counter=0&digits=6&secret='.base32_encode(hex2bin('3132333435363738393031323334353637383930')), $multiotp->GetLogFolder().'qrHOTP.png');
+    
     if (0 < $size_result)
     {
         echo_full("- ".$ok_on.'OK!'.$ok_off." HOTP QRcode successfully created".$crlf);
@@ -1174,7 +1291,7 @@ foreach ($backend_array as $backend) {
     // TEST: Creating a QRcode provisioning file for the TOTP RFC test token
     $tests++;
     echo_full($b_on."Creating a QRcode provisioning file for the TOTP RFC test token".$b_off.$crlf);
-    $size_result = $multiotp->qrcode('otpauth://totp/multiOTP totp test?period=30&digits=6&secret='.base32_encode(hex2bin('3132333435363738393031323334353637383930')).'&issuer=multiOTP test', $multiotp->GetLogFolder().'qrTOTP.png');
+    $size_result = $multiotp->qrcode('otpauth://totp/multiOTP%20test:multiOTP%20totp%20test?period=30&digits=6&secret='.base32_encode(hex2bin('3132333435363738393031323334353637383930')), $multiotp->GetLogFolder().'qrTOTP.png');
     if (0 < $size_result)
     {
         echo_full("- ".$ok_on.'OK!'.$ok_off." TOTP QRcode successfully created".$crlf);
@@ -1196,7 +1313,7 @@ foreach ($backend_array as $backend) {
         echo_full($crlf);
 
         echo_full("Displaying inline image for TOTP QRCode Google Auhtenticator token".$crlf);
-        $binary_result = $multiotp->qrcode('otpauth://totp/multiOTP totp test?secret='.base32_encode(hex2bin('3132333435363738393031323334353637383930')).'&digits=6&period=30&issuer=multiOTP test', "binary");
+        $binary_result = $multiotp->qrcode('otpauth://totp/multiOTP%20test:multiOTP%20totp%20test?secret='.base32_encode(hex2bin('3132333435363738393031323334353637383930')).'&digits=6&period=30', "binary");
         
         echo_full("<img src=\"data:image/png;base64,".base64_encode($binary_result)."\" alt=\"multiOTP TOTP test token\">".$crlf);
         echo_full($crlf);

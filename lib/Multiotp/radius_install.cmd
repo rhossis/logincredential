@@ -4,15 +4,15 @@ REM @file  radius_install.cmd
 REM @brief Script to install the radius service.
 REM
 REM multiOTP - Strong two-factor authentication PHP class package
-REM http://www.multiotp.net
+REM https://www\.multiOTP.net
 REM 
 REM Windows batch file for Windows 2K/XP/2003/7/2008/8/2012/10
 REM
 REM @author    Andre Liechti, SysCo systemes de communication sa, <info@multiotp.net>
-REM @version   5.6.1.5
-REM @date      2019-10-23
+REM @version   5.9.9.1
+REM @date      2025-01-20
 REM @since     2013-08-20
-REM @copyright (c) 2013-2019 SysCo systemes de communication sa
+REM @copyright (c) 2013-2025 SysCo systemes de communication sa
 REM @copyright GNU Lesser General Public License
 REM
 REM
@@ -31,7 +31,7 @@ REM
 REM
 REM Licence
 REM
-REM   Copyright (c) 2013-2019 SysCo systemes de communication sa
+REM   Copyright (c) 2013-2025 SysCo systemes de communication sa
 REM   SysCo (tm) is a trademark of SysCo systemes de communication sa
 REM   (http://www.sysco.ch/)
 REM   All rights reserved.
@@ -47,6 +47,10 @@ REM
 REM
 REM Change Log
 REM
+REM   2024-05-03 5.9.7.2 SysCo/al -debug option removed from the Windows radius module launcher
+REM   2023-11-23 5.9.7.0 SysCo/al Space in installation path supported
+REM   2020-12-11 5.8.0.6 SysCo/al Do an automatic "Run as administrator" if needed
+REM                               Don't delete the _radius_multiotp_folder_alternate environment variable
 REM   2018-09-14 5.4.0.1 SysCo/al Compatibility mode to Windows 7 automatically added for radiusd.exe
 REM   2017-05-29 5.0.4.5 SysCo/al Unified script with some bug fixes
 REM                               Alternate authentication executable support
@@ -62,6 +66,19 @@ REM                               Ports can be set in the command line
 REM   2013-08-20 4.0.4   SysCo/al Initial release
 REM
 REM ************************************************************
+
+NET SESSION >NUL 2>&1
+IF NOT %ERRORLEVEL% == 0 (
+    ECHO WARNING! Please run this script as an administrator, otherwise it will fail.
+    ECHO Elevating privileges...
+    REM PING 127.0.0.1 > NUL 2>&1
+    CD /d %~dp0
+    MSHTA "javascript: var shell = new ActiveXObject('shell.application'); shell.ShellExecute('%~nx0', '', '', 'runas', 1);close();"
+    EXIT
+    REM PAUSE
+    REM EXIT /B 1
+)
+:NoWarning
 
 SET _radius_secret=multiotpsecret
 
@@ -88,57 +105,53 @@ IF NOT "%7"=="" SET _service_name=%_service_name% %7
 IF NOT "%8"=="" SET _service_name=%_service_name% %8
 IF NOT "%9"=="" SET _service_name=%_service_name% %9
 
-IF "%_service_tag%"=="multiOTPradiusTest" GOTO NoWarning
-ECHO WARNING! Please run this script as an administrator, otherwise it will fail.
-PAUSE
-:NoWarning
-
-REM Define the current folder
-SET _folder=%~d0%~p0
+REM Define the current folder IN SHORT PATH NOTATION
+SET _radius_multiotp_folder=%~d0%~sp0
+IF NOT "%_radius_multiotp_folder_alternate%"=="" SET _radius_multiotp_folder=%_radius_multiotp_folder_alternate%
 SET _radius_folder=%~d0%~p0
 SET _tools_folder=%~d0%~p0tools\
-IF NOT EXIST %_radius_folder%radius SET _radius_folder=%~d0%~p0..\
-IF NOT EXIST %_tools_folder%FART.exe SET _tools_folder=%~d0%~p0..\tools\
+IF NOT EXIST "%_radius_folder%radius" SET _radius_folder=%~d0%~p0..\
+IF NOT EXIST "%_tools_folder%FART.exe" SET _tools_folder=%~d0%~p0..\tools\
 
 REM Stop and delete the service (if already existing)
 SC stop %_service_tag% >NUL
 SC delete %_service_tag% >NUL
 
 REM Create the multiotp module for the radius server
-ECHO # Exec module instance for multiOTP (http://www.multiotp.net/).>%_radius_folder%radius\etc\raddb\modules\multiotp
-ECHO exec multiotp {>>%_radius_folder%radius\etc\raddb\modules\multiotp
-ECHO         wait = yes>>%_radius_folder%radius\etc\raddb\modules\multiotp
-ECHO         input_pairs = request>>%_radius_folder%radius\etc\raddb\modules\multiotp
-ECHO         output_pairs = reply>>%_radius_folder%radius\etc\raddb\modules\multiotp
-ECHO         program = "%_radius_multiotp% -base-dir=%_folder% -keep-local -log -debug **"%%{User-Name}**" **"%%{User-Password}**" -src=%%{Packet-Src-IP-Address} -chap-challenge=%%{CHAP-Challenge} -chap-password=%%{CHAP-Password} -ms-chap-challenge=%%{MS-CHAP-Challenge} -ms-chap-response=%%{MS-CHAP-Response} -ms-chap2-response=%%{MS-CHAP2-Response}">>%_radius_folder%radius\etc\raddb\modules\multiotp
-ECHO         shell_escape = yes>>%_radius_folder%radius\etc\raddb\modules\multiotp
-ECHO }>>%_radius_folder%radius\etc\raddb\modules\multiotp
+ECHO # Exec module instance for multiOTP (https://www\.multiOTP.net/).>"%_radius_folder%radius\etc\raddb\modules\multiotp"
+ECHO exec multiotp {>>"%_radius_folder%radius\etc\raddb\modules\multiotp"
+ECHO         wait = yes>>"%_radius_folder%radius\etc\raddb\modules\multiotp"
+ECHO         input_pairs = request>>"%_radius_folder%radius\etc\raddb\modules\multiotp"
+ECHO         output_pairs = reply>>"%_radius_folder%radius\etc\raddb\modules\multiotp"
+ECHO         program = "%_radius_multiotp% **"-base-dir=%_radius_multiotp_folder%**" -keep-local -log **"%%{User-Name}**" **"%%{User-Password}**" -src=%%{Packet-Src-IP-Address} -chap-challenge=%%{CHAP-Challenge} -chap-password=%%{CHAP-Password} -ms-chap-challenge=%%{MS-CHAP-Challenge} -ms-chap-response=%%{MS-CHAP-Response} -ms-chap2-response=%%{MS-CHAP2-Response}">>"%_radius_folder%radius\etc\raddb\modules\multiotp"
+ECHO         shell_escape = yes>>"%_radius_folder%radius\etc\raddb\modules\multiotp"
+ECHO }>>"%_radius_folder%radius\etc\raddb\modules\multiotp"
 
 REM Sorry, this is an *ugly* trick to change "\" to "/" with the FART tool
-%_tools_folder%FART "%_radius_folder%radius\etc\raddb\modules\multiotp" "\\" "!!!/!!!" >NUL
-%_tools_folder%FART --remove "%_radius_folder%radius\etc\raddb\modules\multiotp" "!!!" >NUL
-%_tools_folder%FART "%_radius_folder%radius\etc\raddb\modules\multiotp" "**" "\\" >NUL
+"%_tools_folder%FART.exe" "%_radius_folder%radius\etc\raddb\modules\multiotp" "\\" "!!!/!!!" >NUL
+"%_tools_folder%FART.exe" --remove "%_radius_folder%radius\etc\raddb\modules\multiotp" "!!!" >NUL
+"%_tools_folder%FART.exe" "%_radius_folder%radius\etc\raddb\modules\multiotp" "**" "\\" >NUL
 
 REM Customize the etc/raddb/radiusd.conf configuration file
 COPY "%_radius_folder%radius\etc\raddb\radiusd.template.conf" "%_radius_folder%radius\etc\raddb\radiusd.conf" /Y >NUL
-%_tools_folder%FART "%_radius_folder%radius\etc\raddb\radiusd.conf" "_auth_port" "%_auth_port%" >NUL
-%_tools_folder%FART "%_radius_folder%radius\etc\raddb\radiusd.conf" "_account_port" "%_account_port%" >NUL
+"%_tools_folder%FART.exe" "%_radius_folder%radius\etc\raddb\radiusd.conf" "_auth_port" "%_auth_port%" >NUL
+"%_tools_folder%FART.exe" "%_radius_folder%radius\etc\raddb\radiusd.conf" "_account_port" "%_account_port%" >NUL
 
 REM Customize the etc/raddb/clients.conf configuration file
 COPY "%_radius_folder%radius\etc\raddb\clients.template.conf" "%_radius_folder%radius\etc\raddb\clients.conf" /Y >NUL
 
-%_tools_folder%FART "%_radius_folder%radius\etc\raddb\clients.conf" "_radius_secret" "%_radius_secret%" >NUL
-%_tools_folder%FART "%_radius_folder%radius\etc\raddb\clients.conf" "ipaddr = 127.0.0.1" "ipaddr = 222.222.222.222" >NUL
-%_tools_folder%FART "%_radius_folder%radius\etc\raddb\clients.conf" "client localhost" "client 222.222.222.222" >NUL
+"%_tools_folder%FART.exe" "%_radius_folder%radius\etc\raddb\clients.conf" "_radius_secret" "%_radius_secret%" >NUL
+"%_tools_folder%FART.exe" "%_radius_folder%radius\etc\raddb\clients.conf" "ipaddr = 127.0.0.1" "ipaddr = 222.222.222.222" >NUL
+"%_tools_folder%FART.exe" "%_radius_folder%radius\etc\raddb\clients.conf" "client localhost" "client 222.222.222.222" >NUL
 
 REM Create the service
-SC create %_service_tag% binPath= "%_radius_folder%radius\SRVANY.EXE" start= auto displayname= "%_service_name%" >NUL
-SC description %_service_tag% "Runs the %_service_name% on ports %_auth_port%/%_account_port%." >NUL
+"%_radius_folder%radius\nssm" install "%_service_tag%" "%_radius_folder%radius\sbin\radiusd.exe" >NUL
+"%_radius_folder%radius\nssm" set "%_service_tag%" Description "Runs the %_service_name% on ports %_auth_port%/%_account_port%." >NUL
 
-REM Define the parameters of the service (launched by SRVANY)
-REG ADD "HKLM\SYSTEM\CurrentControlSet\Services\%_service_tag%\Parameters" /f /v Application /t REG_SZ /d "%_radius_folder%radius\sbin\radiusd.exe" >NUL
-REG ADD "HKLM\SYSTEM\CurrentControlSet\Services\%_service_tag%\Parameters" /f /v AppParameters /t REG_SZ /d "-X -d %_radius_folder%radius\etc\raddb" >NUL
-REG ADD "HKLM\SYSTEM\CurrentControlSet\Services\%_service_tag%\Parameters" /f /v AppDirectory /t REG_SZ /d "%_radius_folder%radius\sbin" >NUL
+REM Define the parameters of the service (launched by nssm
+"%_radius_folder%radius\nssm" set "%_service_tag%" DisplayName "%_service_name%" >NUL
+"%_radius_folder%radius\nssm" set "%_service_tag%" AppParameters "-X -d ""%_radius_folder%radius\etc\raddb""" >NUL
+"%_radius_folder%radius\nssm" set "%_service_tag%" AppDirectory "%_radius_folder%radius\sbin" >NUL
 
 REM Define the compatibility mode to Windows 7 for radiusd
 REG ADD "HKLM\Software\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\Layers" /f /v "%_radius_folder%radius\sbin\radiusd.exe" /t REG_SZ /d "WIN7RTM" >NUL
@@ -157,9 +170,8 @@ SC start %_service_tag% >NUL
 REM Clean the environment variables
 SET _account_port=
 SET _auth_port=
-SET _folder=
+SET _radius_multiotp_folder=
 SET _radius_multiotp=
-SET _radius_multiotp_alternate=
 SET _radius_folder=
 SET _radius_secret=
 SET _service_name=

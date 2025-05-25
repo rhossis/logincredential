@@ -4,15 +4,15 @@ REM @file  webservice_uninstall.cmd
 REM @brief Script to uninstall the web service.
 REM
 REM multiOTP - Strong two-factor authentication PHP class package
-REM http://www.multiotp.net
+REM https://www\.multiOTP.net
 REM 
 REM Windows batch file for Windows 2K/XP/2003/7/2008/8/2012/10
 REM
 REM @author    Andre Liechti, SysCo systemes de communication sa, <info@multiotp.net>
-REM @version   5.6.1.5
-REM @date      2019-10-23
+REM @version   5.9.9.1
+REM @date      2025-01-20
 REM @since     2013-08-09
-REM @copyright (c) 2013-2019 SysCo systemes de communication sa
+REM @copyright (c) 2013-2025 SysCo systemes de communication sa
 REM @copyright GNU Lesser General Public License
 REM
 REM
@@ -30,7 +30,7 @@ REM
 REM
 REM Licence
 REM
-REM   Copyright (c) 2013-2019 SysCo systemes de communication sa
+REM   Copyright (c) 2013-2025 SysCo systemes de communication sa
 REM   SysCo (tm) is a trademark of SysCo systemes de communication sa
 REM   (http://www.sysco.ch/)
 REM   All rights reserved.
@@ -40,6 +40,10 @@ REM
 REM
 REM Change Log
 REM
+REM   2023-11-23 5.9.7.0 SysCo/al nginx 1.24.0, PHP 8.2.12
+REM                               Path backslashes converted to slashes to avoid \t interpretation
+REM                               Space in installation path supported
+REM   2020-12-11 5.8.0.6 SysCo/al Do an automatic "Run as administrator" if needed
 REM   2018-11-13 5.4.0.2 SysCo/al Detection to know if something must be stopped
 REM   2017-05-29 5.0.4.5 SysCo/al Unified script with some bug fixes
 REM   2017-01-10 5.0.3.4 SysCo/al The web server is now Nginx instead of Mongoose
@@ -52,19 +56,26 @@ REM   2013-08-19 4.0.4   SysCo/al Initial release
 REM
 REM ************************************************************
 
+NET SESSION >NUL 2>&1
+IF NOT %ERRORLEVEL% == 0 (
+    ECHO WARNING! Please run this script as an administrator, otherwise it will fail.
+    ECHO Elevating privileges...
+    REM PING 127.0.0.1 > NUL 2>&1
+    CD /d %~dp0
+    MSHTA "javascript: var shell = new ActiveXObject('shell.application'); shell.ShellExecute('%~nx0', '', '', 'runas', 1);close();"
+    EXIT
+    REM PAUSE
+    REM EXIT /B 1
+)
+:NoWarning
+
 SET _service_tag=multiOTPservice
 
 IF NOT "%1"=="" SET _service_tag=%1
 
-IF "%_service_tag%"=="multiOTPserverTest" GOTO NoWarning
-ECHO WARNING! Please run this script as an administrator, otherwise it will fail.
-PAUSE
-:NoWarning
-
 SET _folder=%~d0%~p0
 SET _web_folder=%~d0%~p0
-IF NOT EXIST %_web_folder%webservice SET _web_folder=%~d0%~p0..\
-
+IF NOT EXIST "%_web_folder%webservice" SET _web_folder=%~d0%~p0..\
 
 netsh firewall delete allowedprogram "%_folder%webservice\nginx.exe" >NUL
 netsh advfirewall firewall delete rule name="%_service_tag%" >NUL

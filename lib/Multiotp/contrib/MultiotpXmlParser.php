@@ -88,11 +88,8 @@ class MultiotpXmlParser
     {
         //Create the parser resource
         $this->parser = xml_parser_create();
-        
-        //Set the handlers
-        xml_set_object($this->parser, $this);
-        xml_set_element_handler($this->parser, 'StartElement', 'EndElement');
-        xml_set_character_data_handler($this->parser, 'CharacterData');
+        xml_set_element_handler($this->parser, [$this, 'StartElement'], [$this, 'EndElement']);
+        xml_set_character_data_handler($this->parser, [$this, 'CharacterData']);
 
         //Error handling
         if (!xml_parse($this->parser, $this->xml))
@@ -234,6 +231,9 @@ class MultiotpXmlParser
  *
  * Name: MultiotpXMLTag (original name: XMLTag)
  */
+
+// PHP >=8.1 specific attribute to allow dynamic properties
+#[AllowDynamicProperties]
 class MultiotpXMLTag
 {
     /**

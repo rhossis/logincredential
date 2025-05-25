@@ -4,7 +4,23 @@
  * Check PHP version and define version constant if needed
  *   (PHP_VERSION_ID is natively available only for PHP >= 5.2.7)
  ****************************************************************/
-if (!defined('PHP_VERSION_ID'))
+if (!function_exists('constant_defined')) {
+  function constant_defined(
+    $constant_name
+  ) {
+    $result = false;
+    foreach (get_defined_constants() as $key=>$value) {
+      if (strtoupper($key) == strtoupper($constant_name)) {
+        $result = true;
+        break;
+      }
+    }
+    return $result;
+  }
+}
+
+
+if (!constant_defined('PHP_VERSION_ID'))
 {
     $version = explode('.', PHP_VERSION);
     define('PHP_VERSION_ID', ($version[0] * 10000 + $version[1] * 100 + $version[2]));
@@ -18,56 +34,179 @@ if (PHP_VERSION_ID < 50207)
 }  
 
 
-if (!function_exists('fnmatch')) {
+if (!function_exists('nullable_trim')) {
+  function nullable_trim(
+    $string
+  ) {
+    return (is_null($string) ? "" : trim($string));
+  }
+}
+
+
+if (!function_exists('nullable_bin2hex')) {
+  function nullable_bin2hex(
+    $string
+  ) {
+    return (is_null($string) ? "" : bin2hex($string));
+  }
+}
+
+
+if (!function_exists('pcre_fnmatch')) {
+  function pcre_fnmatch(
+    $pattern,
+    $string,
+    $flags = 0
+  ) {
     define('FNM_PATHNAME', 1);
     define('FNM_NOESCAPE', 2);
     define('FNM_PERIOD', 4);
     define('FNM_CASEFOLD', 16);
-   
-    function fnmatch($pattern, $string, $flags = 0) {
-        return pcre_fnmatch($pattern, $string, $flags);
-    }
-}
 
-function pcre_fnmatch($pattern, $string, $flags = 0) {
     $modifiers = null;
     $transforms = array(
-        '\*'    => '.*',
-        '\?'    => '.',
-        '\[\!'    => '[^',
-        '\['    => '[',
-        '\]'    => ']',
-        '\.'    => '\.',
-        '\\'    => '\\\\'
+      '\*'    => '.*',
+      '\?'    => '.',
+      '\[\!'    => '[^',
+      '\['    => '[',
+      '\]'    => ']',
+      '\.'    => '\.',
+      '\\'    => '\\\\'
     );
    
     // Forward slash in string must be in pattern:
     if ($flags & FNM_PATHNAME) {
-        $transforms['\*'] = '[^/]*';
+      $transforms['\*'] = '[^/]*';
     }
    
     // Back slash should not be escaped:
     if ($flags & FNM_NOESCAPE) {
-        unset($transforms['\\']);
+      unset($transforms['\\']);
     }
    
     // Perform case insensitive match:
     if ($flags & FNM_CASEFOLD) {
-        $modifiers .= 'i';
+      $modifiers .= 'i';
     }
    
     // Period at start must be the same as pattern:
     if ($flags & FNM_PERIOD) {
-        if (strpos($string, '.') === 0 && strpos($pattern, '.') !== 0) return false;
+      if (strpos($string, '.') === 0 && strpos($pattern, '.') !== 0) return false;
     }
    
     $pattern = '#^'
-        . strtr(preg_quote($pattern, '#'), $transforms)
-        . '$#'
-        . $modifiers;
+      . strtr(preg_quote($pattern, '#'), $transforms)
+      . '$#'
+      . $modifiers;
    
     return (boolean)preg_match($pattern, $string);
+  }
 } 
+
+
+if (!function_exists('fnmatch')) {
+  function fnmatch(
+    $pattern,
+    $string,
+    $flags = 0)
+  {
+    return pcre_fnmatch($pattern, $string, $flags);
+  }
+}
+
+
+if (!function_exists('is64bitPHP')) {
+  function is64bitPHP() {
+    return strstr(php_uname("m"), '64') == '64';
+  }
+}
+
+
+/***********************************************************************
+ * Name: ram_total_space
+ * Short description: return total RAM in Bytes.
+ *
+ * @return int Bytes
+ ***********************************************************************/
+if (!function_exists('ram_total_space')) {
+    function ram_total_space() {
+        $size = 0;
+        if (mb_strtolower(mb_substr(PHP_OS, 0, 3),'UTF-8') === 'win') {
+            $lines = null;
+            $matches = null;
+            exec('wmic ComputerSystem get TotalPhysicalMemory /Value', $lines);
+            if (preg_match('/^TotalPhysicalMemory\=(\d+)$/', $lines[2], $matches)) {
+                $size = $matches[1];
+            }
+        } else {
+            $meminfo_file = fopen('/proc/meminfo', 'r');
+            while ($line = fgets($meminfo_file)) {
+                $elements = array();
+                if (preg_match('/^MemTotal:\s+(\d+)\skB$/', $line, $elements)) {
+                    $size = $elements[1] * 1024;
+                    break;
+                }
+            }
+            fclose($meminfo_file);
+        }
+        return (double) $size;
+    }
+}
+
+
+/***********************************************************************
+ * Name: ram_free_space
+ * Short description: return free RAM in Bytes.
+ *
+ * @return int Bytes
+ ***********************************************************************/
+if (!function_exists('ram_free_space')) {
+    function ram_free_space() {
+        $size = 0;
+        if (mb_strtolower(mb_substr(PHP_OS, 0, 3),'UTF-8') === 'win') {
+            $lines = null;
+            $matches = null;
+            exec('wmic OS get FreePhysicalMemory /Value', $lines);
+            if (preg_match('/^FreePhysicalMemory\=(\d+)$/', $lines[2], $matches)) {
+                $size = $matches[1] * 1024;
+            }
+        } else {
+            $meminfo_file = fopen('/proc/meminfo', 'r');
+            while ($line = fgets($meminfo_file)) {
+                $elements = array();
+                if (preg_match('/^MemFree:\s+(\d+)\skB$/', $line, $elements)) {
+                    // KB to Bytes
+                    $size = $elements[1] * 1024;
+                    break;
+                }
+            }
+            fclose($meminfo_file);
+        }
+        return (double) $size;
+    }
+}
+
+
+/***********************************************************************
+ * Name: bytes_nice_format
+ * Short description: nice format for a size in bytes
+ *
+ * Creation 2021-03-14
+ * Update   2021-03-14
+ * @version 1.0.0
+ * @author  Adapted from https://www.php.net/manual/en/function.disk-free-space.php#103382
+ *
+ * @param   int     $bytes   size in bytes
+ * @return  string           nice size in a string
+ ***********************************************************************/
+if (!function_exists('bytes_nice_format')) {
+    function bytes_nice_format($bytes) {
+        $size_prefix = array( 'B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB' );
+        $base = 1024;
+        $class = min((int)log($bytes , $base) , count($size_prefix) - 1);
+        return sprintf('%1.2f' , $bytes / pow($base,$class)) . ' ' . $size_prefix[$class];
+    }
+}
 
 
 /***********************************************************************
@@ -124,6 +263,24 @@ if (!function_exists('is_valid_ipv4')) {
                 '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.'.
                 '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b/', $ip) !== 0;
         }
+    }
+}
+
+
+/***********************************************************************
+ * Name: is_public_ip
+ * Short description: Check if the string is a public IP address
+ *
+ * Creation 2020-05-20
+ * Update   2020-05-20
+ * @version 1.0.0
+ *
+ * @param   string  $ip  String to check
+ * @return  boolean      TRUE if it is a valid public IP address
+ ***********************************************************************/
+if (!function_exists('is_public_ip')) {
+    function is_public_ip($ip) {
+        return filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 | FILTER_FLAG_NO_PRIV_RANGE |  FILTER_FLAG_NO_RES_RANGE);
     }
 }
 
@@ -500,11 +657,15 @@ if (!function_exists('base32_decode'))
             $x = "";
             if(!in_array($input[$i], $map)) return false;
             for($j=0; $j < 8; $j++) {
-                $x .= str_pad(base_convert(@$flippedMap[@$input[$i + $j]], 10, 2), 5, '0', STR_PAD_LEFT);
+                if (!is_null(@$flippedMap[@$input[$i + $j]])) {
+                  $x .= str_pad(base_convert(@$flippedMap[@$input[$i + $j]], 10, 2), 5, '0', STR_PAD_LEFT);
+                }
             }
             $eightBits = str_split($x, 8);
             for($z = 0; $z < count($eightBits); $z++) {
-                $binaryString .= ( ($y = chr(base_convert($eightBits[$z], 2, 10))) || ord($y) == 48 ) ? $y:"";
+                if (!is_null($eightBits[$z])) {
+                  $binaryString .= ( ($y = chr(base_convert($eightBits[$z], 2, 10))) || ord($y) == 48 ) ? $y:"";
+                }
             }
         }
         return substr($binaryString, 0, $result_length);
@@ -513,20 +674,37 @@ if (!function_exists('base32_decode'))
 
 
 /*******************************************************************
- * Custom function encode_utf8_if_needed
+ * Custom function encode_utf8_if_needed (now also décoding octal notation)
  *
  * @author SysCo/al
  *******************************************************************/
+/***********************************************************************
+ * Name: encode_utf8_if_needed
+ * Short description: encode to UTF-8 if needed, and also converting ISO octal notation
+ *
+ * Creation 2022-05-20
+ * Update   2021-03-14
+ * @version 1.1.0
+ * @author  SysCo/al
+ *
+ * @param   string  $data   string to encode if needed
+ * @return  string          UTF-8 string
+ ***********************************************************************/
 if (!function_exists('encode_utf8_if_needed')) {
-	function encode_utf8_if_needed($data)
-	{
+	function encode_utf8_if_needed(
+    $data
+  ) {
 		$text = $data;
-        $encoding = mb_detect_encoding($text . 'a' , 'UTF-8, ISO-8859-1');
-        if ("UTF-8" != $encoding) {
-            $text = utf8_encode($text);
-		// $encoding = mb_detect_encoding($text . 'a' , 'UTF-8, ISO-8859-1, WINDOWS-1252');
-		// if ("UTF-8" != $encoding) {
-            // $text = mb_convert_encoding($text, "UTF-8", "UTF-8, ISO-8859-1, WINDOWS-1252");
+
+    preg_match_all('#\\\\[0-9]{3}#', $text, $matches);
+    foreach($matches[0] as $match){
+      $char = preg_replace("#(\\\)#", "", $match);
+      $a = pack("H*", base_convert($char, 8, 16));
+      $text = preg_replace('#(\\\\)'.$char.'#',$a,$text);
+    }
+		$encoding = mb_detect_encoding($text . 'a' , 'UTF-8, ISO-8859-1, WINDOWS-1252');
+    if ("UTF-8" != $encoding) {
+      $text = mb_convert_encoding($text, "UTF-8", "UTF-8, ISO-8859-1, WINDOWS-1252");
 		}
 		return $text;
 	}
@@ -542,12 +720,9 @@ if (!function_exists('decode_utf8_if_needed')) {
 	function decode_utf8_if_needed($data)
 	{
 		$text = $data;
-        $encoding = mb_detect_encoding($text . 'a' , 'UTF-8, ISO-8859-1');
-        if ("UTF-8" == $encoding) {
-            $text = utf8_decode($text);
-        // $encoding = mb_detect_encoding($text . 'a' , 'UTF-8, ISO-8859-1, WINDOWS-1252');
-		// if ("ISO-8859-1" != $encoding) {
-            // $text = mb_convert_encoding($text, "ISO-8859-1", "UTF-8, ISO-8859-1, WINDOWS-1252");
+    $encoding = mb_detect_encoding($text . 'a' , 'UTF-8, ISO-8859-1, WINDOWS-1252');
+    if ("UTF-8" == $encoding) {
+      $text = mb_convert_encoding($text, "ISO-8859-1", "UTF-8, ISO-8859-1, WINDOWS-1252");
 		}
 		return $text;
 	}
@@ -611,7 +786,7 @@ if (!function_exists('md4'))
             $nblk = ((strlen($str) + 8) >> 6) + 1;
             for($i = 0; $i < $nblk * 16; $i++) $blks[$i] = 0;
             for($i = 0; $i < strlen($str); $i++)
-                $blks[$i >> 2] |= ord($str{$i}) << (($i % 4) * 8);
+                $blks[$i >> 2] |= ord($str[$i]) << (($i % 4) * 8);
             $blks[$i >> 2] |= 0x80 << (($i % 4) * 8);
             $blks[$nblk * 16 - 2] = strlen($str) * 8;
             return $blks;
@@ -827,12 +1002,17 @@ if (!function_exists('rmrf')) {
 }
 
 
-/**
- * Based on http://snipplr.com/view/57982/convert-html-to-text/
- *   by kendsnyder (2011-08-18)
+/***********************************************************************
+ * Name: html2text
+ * Short description: Convert html to text
+ *   Based on http://snipplr.com/view/57982/convert-html-to-text/
  *
- * Enhanced by SysCo/al
- */
+ * Creation 2011-08-18 kendsnyder
+ * Update   2021-03-23
+ * @version 2.0.0
+ * @author  SysCo/al
+ ***********************************************************************/
+
 if (!function_exists('html2text'))
 {
     function html2text($value)
@@ -860,8 +1040,7 @@ if (!function_exists('html2text'))
                         '@&(cent|#162);@i',               //   Cent
                         '@&(pound|#163);@i',              //   Pound
                         '@&(copy|#169);@i',               //   Copyright
-                        '@&(reg|#174);@i',                //   Registered
-                        '@&#(d+);@e');                    // Evaluate as php
+                        '@&(reg|#174);@i');               //   Registered
         $Replace = array ('',  // Strip out javascript
                           '',  // Strip out style
                           '',  // Strip out title
@@ -877,14 +1056,16 @@ if (!function_exists('html2text'))
                           chr(162), // Cent
                           chr(163), // Pound
                           chr(169), // Copyright
-                          chr(174), // Registered
-                          'chr()'); // Evaluate as php
+                          chr(174)); // Registered
         $Document = preg_replace($Rules, $Replace, $Document);
+        
+        $Document = preg_replace_callback('@&#(d+);@i', function ($match) { return (((intval($match) >= 1) && (intval($match) <= 255)) ? chr(intval($match)) : ''); }, $Document);
+
         $Document = preg_replace('@[\r\n]@', '', $Document);
         $Document = str_replace('*CRLF*',chr(13).chr(10),$Document);
         $Document = preg_replace('@[\r\n][ ]+@', chr(13).chr(10), $Document);
         $Document = preg_replace('@[\r\n][\r\n]+@', chr(13).chr(10).chr(13).chr(10), $Document);
-        return trim($Document);
+        return nullable_trim($Document);
     }
 }
 
@@ -1015,5 +1196,24 @@ if (!function_exists('mask2cidr'))
         }
         return $bits;
     }
+}
+
+
+if (!function_exists('protect_file'))
+{
+  function protect_file(
+    $file,
+    $sid
+  ) {
+    if (mb_strtolower(mb_substr(PHP_OS, 0, 3),'UTF-8') === 'win') {
+      $sidAdmin = 'S-1-5-32-544';
+      $sidUsers = 'S-1-5-32-545';
+      $sidAuthenticatedUsers = 'S-1-5-11';
+      exec("icacls \"$file\" /grant *$sid:F");
+      exec("icacls \"$file\" /grant *$sidAdmin:F");
+      exec("icacls \"$file\" /inheritance:r /remove:g *$sidUsers");
+      exec("icacls \"$file\" /inheritance:r /remove:g *$sidAuthenticatedUsers");
+    }
+  }
 }
 ?>

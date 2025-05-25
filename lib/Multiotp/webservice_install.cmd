@@ -4,15 +4,15 @@ REM @file  webservice_install.cmd
 REM @brief Script to install the web service.
 REM
 REM multiOTP - Strong two-factor authentication PHP class package
-REM http://www.multiotp.net
+REM https://www\.multiOTP.net
 REM 
 REM Windows batch file for Windows 2K/XP/2003/7/2008/8/2012/10
 REM
 REM @author    Andre Liechti, SysCo systemes de communication sa, <info@multiotp.net>
-REM @version   5.6.1.5
-REM @date      2019-10-23
+REM @version   5.9.9.1
+REM @date      2025-01-20
 REM @since     2013-08-09
-REM @copyright (c) 2013-2019 SysCo systemes de communication sa
+REM @copyright (c) 2013-2025 SysCo systemes de communication sa
 REM @copyright GNU Lesser General Public License
 REM
 REM
@@ -31,7 +31,7 @@ REM
 REM
 REM Licence
 REM
-REM   Copyright (c) 2013-2019 SysCo systemes de communication sa
+REM   Copyright (c) 2013-2025 SysCo systemes de communication sa
 REM   SysCo (tm) is a trademark of SysCo systemes de communication sa
 REM   (http://www.sysco.ch/)
 REM   All rights reserved.
@@ -41,6 +41,12 @@ REM
 REM
 REM Change Log
 REM
+REM   2023-11-23 5.9.7.0 SysCo/al nginx 1.24.0, PHP 8.2.12
+REM                               Path backslashes converted to slashes to avoid \t interpretation
+REM                               Space in installation path supported
+REM   2022-12-31 5.9.5.3 SysCo/al nginx 1.22.1, PHP 8.2.0
+REM   2022-11-11 5.9.5.1 SysCo/al Windows nginx subfolders are now protected
+REM   2020-12-11 5.8.0.6 SysCo/al Do an automatic "Run as administrator" if needed
 REM   2017-05-29 5.0.4.5 SysCo/al Unified script with some bug fixes
 REM                               Alternate GUI file support
 REM   2017-01-10 5.0.3.4 SysCo/al The web server is now Nginx instead of Mongoose
@@ -55,6 +61,19 @@ REM   2013-08-21 4.0.5   SysCo/al Ports can be set in the command line
 REM   2013-08-19 4.0.4   SysCo/al Initial release
 REM
 REM ************************************************************
+
+NET SESSION >NUL 2>&1
+IF NOT %ERRORLEVEL% == 0 (
+    ECHO WARNING! Please run this script as an administrator, otherwise it will fail.
+    ECHO Elevating privileges...
+    REM PING 127.0.0.1 > NUL 2>&1
+    CD /d %~dp0
+    MSHTA "javascript: var shell = new ActiveXObject('shell.application'); shell.ShellExecute('%~nx0', '', '', 'runas', 1);close();"
+    EXIT
+    REM PAUSE
+    REM EXIT /B 1
+)
+:NoWarning
 
 @setlocal enableextensions enabledelayedexpansion
 
@@ -87,15 +106,11 @@ IF NOT "%8"=="" SET _service_name=%_service_name% %8
 IF NOT "%9"=="" SET _service_name=%_service_name% %9
 
 IF "%_service_tag%"=="multiOTPserverTest" SET _no_web_display=1
-IF "%_service_tag%"=="multiOTPserverTest" GOTO NoWarning
-ECHO WARNING! Please run this script as an administrator, otherwise it will fail.
-PAUSE
-:NoWarning
 
 REM Define the current folder
 SET _folder=%~d0%~p0
 SET _web_folder=%~d0%~p0
-IF NOT EXIST %_web_folder%webservice SET _web_folder=%~d0%~p0..\
+IF NOT EXIST "%_web_folder%webservice" SET _web_folder=%~d0%~p0..\
 
 SET _root_folder=%_folder%
 if "!_root_folder:~-1!"=="\" (
@@ -106,13 +121,11 @@ REM Stop and delete the service (if already existing)
 SC stop %_service_tag% >NUL
 SC delete %_service_tag% >NUL
 
-SET _check_pattern=
-IF "multiOTPserverTest"=="%_service_tag%" SET _check_pattern=location /check { root %_root_folder%; try_files $uri $uri/ /%_web_multiotp_class_check%$is_args$args; }
-SET _check_pattern=location /check { root %_root_folder%; try_files $uri $uri/ /%_web_multiotp_class_check%$is_args$args; }
+SET _check_pattern=location /check { root "%_root_folder:\=/%"; try_files $uri $uri/ /%_web_multiotp_class_check%$is_args$args; }
 
 SET _config_file="%_web_folder%webservice\conf\sites-enabled\multiotp.conf"
-IF NOT EXIST %_web_folder%webservice\conf MD %_web_folder%webservice\conf
-IF NOT EXIST %_web_folder%webservice\conf\sites-enabled MD %_web_folder%webservice\conf\sites-enabled
+IF NOT EXIST "%_web_folder%webservice\conf" MD "%_web_folder%webservice\conf"
+IF NOT EXIST "%_web_folder%webservice\conf\sites-enabled" MD "%_web_folder%webservice\conf\sites-enabled"
 
 ECHO server {> %_config_file%
 ECHO     listen       %_web_port%;>> %_config_file%
@@ -125,7 +138,7 @@ ECHO     ssl_protocols       TLSv1 TLSv1.1 TLSv1.2;>> %_config_file%
 ECHO     ssl_ciphers         TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA:TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA:TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA:ECDH+AESGCM:DH+AESGCM:ECDH+AES256:DH+AES256:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA384:ECDH-RSA-AES256-SHA384:ECDH-ECDSA-AES256-SHA384:ALL:!RC4:HIGH:!IDEA:!MD5:!aNULL:!eNULL:!EDH:!SSLv2:!ADH:!EXPORT40:!EXP:!LOW:!ADH:!AECDH:!DSS:@STRENGTH;>> %_config_file%
 ECHO     ssl_prefer_server_ciphers on;>> %_config_file%
 ECHO.>> %_config_file%
-ECHO     root %_root_folder%;>> %_config_file%
+ECHO     root "%_root_folder:\=/%";>> %_config_file%
 ECHO     index %_web_multiotp%;>> %_config_file%
 ECHO.>> %_config_file%
 ECHO     gzip            on;>> %_config_file%
@@ -146,9 +159,14 @@ ECHO.>> %_config_file%
 ECHO     try_files $uri $uri/ /%_web_multiotp%;>> %_config_file%
 ECHO.>> %_config_file%
 
-IF NOT "%_check_pattern%"=="" ECHO %_check_pattern%>> %_config_file%
-IF NOT "%_check_pattern%"=="" ECHO.>> %_config_file%
+ECHO %_check_pattern%>> %_config_file%
+ECHO.>> %_config_file%
 
+ECHO     location ~ /(config^|log^|users^|tokens^|devices^|groups^|radius^|webservice) {>> %_config_file%
+ECHO         deny all;>> %_config_file%
+ECHO         return 404;>> %_config_file%
+ECHO     }>> %_config_file%
+ECHO.>> %_config_file%
 ECHO     location ~* \.(appcache^|manifest)$ {>> %_config_file%
 ECHO         expires -1;>> %_config_file%
 ECHO     }>> %_config_file%

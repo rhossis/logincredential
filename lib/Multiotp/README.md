@@ -3,18 +3,26 @@ multiOTP open source
 multiOTP open source is a GNU LGPL implementation of a strong two-factor authentication PHP class  
 multiOTP open source is OATH certified for HOTP/TOTP
 
-(c) 2010-2019 SysCo systemes de communication sa  
-http://www.multiOTP.net/
+(c) 2010-2025 SysCo systemes de communication sa  
+https://www.multiotp.net/
 
-Current build: 5.6.1.5 (2019-10-23)
+Current build: 5.9.9.1 (2025-01-20)
 
 Binary download: https://download.multiotp.net/ (including virtual appliance image)
 
-Docker container available: **docker run --mount source=multiotp-data,target=/etc/multiotp -p 80:80 -p 443:443 -p 1812:1812/udp -p 1813:1813/udp -d multiotp/multiotp-open-source**
+Docker container available: **docker run -v path/to/multiotp/data:/etc/multiotp -v path/to/freeradius/config:/etc/freeradius -v path/to/multiotp/log:/var/log/multiotp -v path/to/freeradius/log:/var/log/freeradius -p 80:80 -p 443:443 -p 1812:1812/udp -p 1813:1813/udp -d multiotp/multiotp-open-source**
+
+**Docker volumes**  
+PATH/TO/MULTIOTP/DATA/VOLUME:/etc/multiotp  
+PATH/TO/FREERADIUS/CONFIG/VOLUME:/etc/freeradius  
+PATH/TO/MULTIOTP/LOG/VOLUME:/var/log/multiotp  
+PATH/TO/FREERADIUS/LOG/VOLUME:/var/log/freeradius  
 
 **A Dockerfile is included in the distribution ZIP file**
 
-Binary download of the multiOTP open source Credential Provider V2 for Windows 7/8/8.1/10/2012(R2)/2016 with options like RDP only and UPN name support : https://download.multiotp.net/credential-provider/
+The **multiotp/multiotp-open-source** docker is working on Synology devices !  
+
+Binary download of the multiOTP open source Credential Provider for Windows 7/8/8.1/10/11/2012(R2)/2016/2019/2022 : https://download.multiotp.net/credential-provider/
 
 [![Donate via PayPal](https://img.shields.io/badge/donate-paypal-87ceeb.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&currency_code=USD&business=paypal@sysco.ch&item_name=Donation%20for%20multiOTP%20project)
 *Please consider supporting this project by making a donation via [PayPal](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&currency_code=USD&business=paypal@sysco.ch&item_name=Donation%20for%20multiOTP%20project)*
@@ -27,13 +35,13 @@ that is interested about security issues, it's a fully open source solution!
 
 This package is the result of a *bunch* of work. If you are happy using this
 package, [Donation] are always welcome to support this project.
-Please check http://www.multiOTP.net/ and you will find the magic button ;-)
+Please check https://www.multiotp.net/ and you will find the magic button ;-)
 
 If you need some specific features in the open source edition of multiOTP,
 please contact us in order to discuss about a sponsorship in order to
 prioritize your needs.
 
-You can also have a look on on http://www.multiotp.com for multiOTP Pro and
+You can also have a look on on https://www.multiOTP.com for multiOTP Pro and
 multiOTP Enterprise, which are commercial editions of ready to use virtual
 appliances including more features like:
  - Full Web GUI interface
@@ -59,8 +67,8 @@ The multiOTP class supports currently the following algorithms and RFC's:
 - mOTP (http://motp.sourceforge.net)
 - OATH/HOTP or OATH/TOTP, base32/hex/raw seed, QRcode provisioning
   (FreeOTP, Google Authenticator, ...)
-- SMS tokens (using Afilnet, aspsms, Clickatell, eCall, IntelliSMS, Nexmo,
-  NowSMS, SMSEagle, Swisscom LA REST, any custom provider, your own script)
+- SMS tokens (using Afilnet, aspsms, Clickatell, eCall, IntelliSMS, Nexmo, NowSMS,
+  SMSEagle, Swisscom LA REST, Telnyx, any custom provider, your own script)
 - TAN (emergency scratch passwords)
 
 This package was initially published here : http://syscoal.users.phpclasses.org/package/6373.html
@@ -91,8 +99,11 @@ TABLE OF CONTENTS
  * How to configure multiOTP to use the client/server feature ?
  * How to build a Raspberry Pi strong authentication server ?
  * How to install a local only strong authentication on a Windows machine ?
- * How to install a centralized strong authentication server
-   for strong authentication on Windows desktops or RDP ?
+ * How to install a centralized 2FA server for Windows desktops or RDP login ?
+ * Adding 2FA with multiOTP to the Remote Desktop Web Access (RDWeb) on Windows
+ * Same Windows generic account with multiple two-factor authentication accounts
+ * Using multiOTP on Linux for SSH login
+ * LDAP filter customization
  * OpenSSL options for LDAPS
  * Compatible clients applications and devices
  * External packages used
@@ -108,29 +119,6 @@ If you'd like to support our work, then consider making a donation, any support
 is always welcome even if it's as low as $1!
 You can also sponsor the development of a specific feature. Please contact
 us in order to discuss the detail of the implementation.
-
-Thanks to our main donators and sponsors:  
-CSG De Lage Waard (NL)
-Donator AB (SE)  
-Henk van der Helm (NL)  
-Hermann Wegener GmbH & Co. KG (DE)  
-SerNet GmbH (DE)  
-SKB Kontur (RU)
-
-
-WISHLIST FOR FUTURE RELEASES
-============================
-- RADIUS challenge/response support
-- Multiple hardware tokens support for one account
-- Generic web based SMS provider support
-- Radius gateway support
-- YubiCloud support
-- FIDO support (SOAP service)
-- Bootstrap/VueJS frontend
-- SMS-revolution SMS provider support
-- Doxygen documentation format
-- Users CSV import
-  (username;pin;prefix_pin_needed;email;sms;serial_number;manufacturer;algorithm;seed;digits;interval_or_event)
 
 
 HOW CAN I UPGRADE FROM A PREVIOUS VERSION ?
@@ -158,151 +146,153 @@ upgrade your installation by copying the extracted content of the folder and
 subfolders from windows to your current multiOTP folder
 
 
-WHAT'S NEW IN THE RELEASES
-==========================
-# What's new in 5.6 releases
-- Better PHP 7.3 support
-
-# What's new in 5.5 releases
-- Debian 10.x (buster) binary images support (64 bits)
-- Out of sync detection with specific error message (for example hardware tokens not used for a long time)
-
-# What's new in 5.4 releases
-- SMS providers added (Swisscom LA REST, Afilnet, Clickatell2, eCall, Nexmo, NowSMS, SMSEagle)
-- Generic SMS custom provider
-- Debian 9.x (stretch) binary images support
-- New Raspberry images support for Raspberry Pi 1B/1B+/2B/3B/3B+
-
-# What's new in 5.3 releases
-- Multiple semicolon separated "Users DN" supported for AD/LDAP synchronization
-- New windows executable build process, using PHP 7.2.8
-- Special all-in-one-file created with the updated Enigma Virtual Box version 9.00
-- without2FA algorithm now available (useful to do 2FA only for some accounts and not for others)
-
-# What's new in 5.2 releases
-- Multiple semicolon separated Users DN supported (since 5.2.0.3)
-- Active Directory nested groups support
-  (user1 in groupA, groupA in groupB, setting the OTP groups to "groupB" will add user1)
-- Enhanced AD/LDAP support for huge Microsoft Active Directory
-- Base DN and Users DN are now two different parameters (Users DN optional)
-
-# What's new in 5.1 releases
-- Dockerfile available (5.1.1.2)
-- Credential Provider registry entries are always used when calling multiOTP.exe (5.1.0.6)
-- Expired AD/LDAP password support
-- multiOTP Credential Provider (for Windows) improvements
- (user@domain.name UPN support, default domain name supported and displayed, SMS request link)
-- Better unicode handling, multibyte fonctions used when needed (mb_strtolower(), ...)
-
-# What's new in 5.0 releases
-- Better FreeRADIUS 3.x documentation
-- New QRCode provisioning format for mOTP (compatible with OTP Authenticator) (5.0.5.2)
-- Important, under Linux, the config, devices, groups, tokens and users folders are now always
-  located in /etc/multiotp/. Please be sure to make the move when you are upgrading (5.0.4.6)
-- PostgreSQL support, based on source code provided by Frank van der Aa (5.0.4.5)
-- Restore configuration added in Web GUI (5.0.4.5)
-- New GetDelayedUsersList() method (5.0.3.6)
-- SetUserTokenSeed() and SetTokenSeed() methods accept now also base32 and raw binary (5.0.3.6)
-- Multiple groups per user is now supported (not all devices support multiple groups) (5.0.3.4)
-- Using AD/LDAP password instead of PIN code can be overwritten or not for all synchronized users
-- New windows executable build process, using PHP 7.x (5.0.3.4)
-- It's now possible to do several commands at once with the CLI edition (5.0.3.4)
-- The default TOTP/HOTP generator for Android/iOS is now FreeOTP Authenticator
-- EXE files are now signed in SHA256 (5.0.3.4)
-- New LDAP cache management to support huge AD/LDAP, with cache on disk (5.0.3.4)
-- New PurgeLockFolder() and PurgeLdapCacheFolder() methods (5.0.3.4)
-- If the user dialin IP address is defined, Framed-IP-Address and Framed-IP-Mask
-  are delivered in the RADIUS answer (5.0.3.0)
-- The user dialin IP address is synchronized from the Active Directory msRADIUSFramedIPAddress
-  attribute (5.0.3.0)
-- The first matching group defined in AD/LDAP group(s) filtering is now defined for the user
-  (this group is returned as the Filter-Id (11) option in a successful RADIUS answer) (5.0.1.0)
-- SOAP service available (compatible with OpenOTP SOAP service)
-- It's now possible to select a specific LDAP/AD attribute used as the synchronised account name
-  SetLdapSyncedUserAttribute(), GetLdapSyncedUserAttribute()
-- Cached requests supported (cached during a specific amount of time, useful for WebDAV,
-  device option cache_result_enabled)
-- A try on the previous password is rejected, but the error counter is not incremented
-- ForceNoDisplayLog() method added, in order to be able to disable log on display in server mode
-- YubicoOTP private id check is now implemented
-- SSL AD/LDAP also supported with Windows 2012 server
-- SyncLdapUsers is now using a semaphore file in order to avoid concurrent process for large AD/LDAP sync
-  (tested with 1'000 groups, 100'000 users, 1'000 users in the LDAP sync group)
-- AD/LDAP additional log information
-- Special chars support enhanced in LDAP class (as described in RFC4515)
-- The default ldap_group_cn_identifier is now cn instead of sAMAccountName
-- Enhanced SMS support for Clickatell, SSL is now also working
-- Bug fix concerning QRcode generation for mOTP
-- Weekly anonymized stats added (can be disabled)
-
-# What's new in 4.3 releases
-- Virtual Appliances are now available (VMware, Hyper-V, generic OVA) (4.3.2.5)
-- Raspberry Pi edition has now a special proxy to speed up the command line (4.3.1)
-- Generic LDAP support (in addition to Microsoft Active Directory support) (4.3.1)
-- New AD/LDAP faster sync algorithm to support larger AD (4.3.0)
-- If users are synced using AD/LDAP, it's now possible to use
-  the AD/LDAP password instead of the PIN code (4.3.0)
-- Yubico OTP support, including keys import using the log file in Traditional format (4.3.0)
-- Resync during authentication (autoresync) is now better handled in the class directly
-- QRCode generation for mOTP (compatible with Token2 App for iOS, Android and Windows Phone)
-
-# What's new in 4.2 releases
-- A new option -user-info is now available (4.2.4.1)
-- Tokens CSV import (4.2.4.1)
-- NT_KEY can be displayed for further handling by FreeRADIUS (4.2.4.1)
-- Lot of new QA tests, more than 60 different tests (4.2.4.0)
-- Better MySQL support with mysqli library support (4.2.4.0)
-- If activated, prefix PIN is now also requested for SMS authentication (4.2.2.0)
-- Web GUI is complete for a simple usage (4.2.2.0)
-- Some values can now go back to TekRADIUS (4.2.2.0)
-- AD/LDAP is now fully supported (4.2.1.0)
-- MS-CHAP and MS-CHAPv2 authentication support
-
-# What's new in 4.1 releases
-- Syslog support
-- Token resync only (without login) doesn't need prefix PIN anymore
-- Specific parameters order in QRCode for Microsoft Authenticator support
-- The open source edition of multiOTP is also OATH certified for HOTP and TOTP,
-  which includes encrypted PSKC import support
-- Instructions and files to build your own strong authentication server device
-  on a Raspberry Pi nano-computer
-- Self-registration of unattributed hardware tokens
-- Automatic resync/unlock during authentication
-- Default Linux file mode is now set by default to 0666 to avoid access problem
-- Basic web GUI
-
-# What's new in 4.0 releases
-- Full client/server support with local cache
-- CHAP authentication support
-- Emergency scratch passwords list
-  (providing a list of 10 emergency one-time-usage passwords)
-- SMS code sending (with clickatell, aspsms, intellisms and custom exec support)
-- integrated Google Authenticator support with integrated base 32 seed handling
-- Conversion from hardware HOTP/TOTP tokens to software tokens
-- QRcode generation for HOTP/TOTP automatic provisioning
-- Integrated QRcode generator library (from Y. Swetake)
-- Group attribute per user (sent back through the Radius attribute Filter-Id)
-- A lot of new options, also available in command line
-- Options are stored in an external configuration file (or in the database)
-- Full MySQL support, including tables creation
-- Fully automatic build chain (invisible for you, but very nice for me)
-- (Parts of the) comments have been reformatted and enhanced,
-  but still some work to do.
-
-# What's new in 3.9 releases
-- Support for account with multiple users
-- Some bug fixes
-
-# What's new in 3.2 releases
-- Google Authenticator support. Special information to handle the base 32 seed.
-- Better MySQL backend integration. Now it is possible to store all
-  information in a MySQL backend instead of flat files.
+WHAT'S NEW IN THIS 5.9.x RELEASE
+- LDAP filter can be customized
+- Users without 2FA tokens don't see the second screen in the Credential Provider during logon
+- New Raspberry, Hyper-V and OVA appliances available (version 011, based on Debian 11)
+- Scratchlist can be generated from the Web GUI
+- {MultiotpUserDisplayName} (AD/LDAP DisplayName) can be used in templates
+- New open source on-premises SMS provider support (https://github.com/multiOTP/SMSGateway)
 
 
 CHANGE LOG OF RELEASED VERSIONS
 ===============================
 ```
+2025-01-20 5.9.9.1 FIX: Windows backup temp folder is now the default system temp folder
+                   FIX: Adding -sync-delete-retention-days parameter doesn't return missing parameters error
+                   FIX: Case sensitive issue has been fixed with MSCHAPv2 authentication (thanks Alexey)
+                   FIX: Case sensitive issue has been fixed during FastCreateUser process
+                   ENH: Created users are trimmed to avoid bad space prefix/suffix during copy/paste
+                   ENH: multiOTP Credential Provider enhanced support
+                   ENH: New default-2fa-digits command line option to set the default amount of OTP digits 
+                   ENH: PHP 8.4.x deprecated code cleaned (xml_set_object removed)
+2025-01-10 5.9.8.3 FIX: {MultiotpUserDisplayName} tag usage in templates (was not replaced in the QRcode)
+                   ENH: New Message-Authenticator requirement support for FortiGate v7.2.10+, v7.4.5+ and v7.6.1+
+                   ENH: New SetCurrentUserSid function for new Credential Provider -usersid option
+                   ENH: Embedded Windows PHP edition updated to version 8.3.15
+                   ENH: Embedded Windows nginx edition updated to version 1.27.3
+2024-08-26 5.9.8.0 FIX: Database backend setup and initialization was not working well with some PHP version
+                   ENH: New option to force writing logs only in file (even if the backend is a database)
+                   ENH: Spryng SMS provider support
+                   ENH: PHP 8.2.x deprecated code cleaned (null for string parameters)
+2024-05-03 5.9.7.2 FIX: without2fa token can be now correctly converted to TOTP with default 30 seconds time interval
+                   FIX: Without2fa tokens with prefix pin where not working with CHAP/MSCHAP/MSCHAPv2
+                   FIX: Windows: radiusd.conf and clients.conf files removed from the distribution
+                        (they are created automatically when installing the services using radius_install.cmd)
+                   ENH: Windows: -debug option removed from the radius module launcher
+                   ENH: By design, Credential Provider check request don't wait any prefix. This behavior can now be overwrited.
+2023-12-03 5.9.7.1 FIX: Command line number of parameters detection corrected
+                   ENH: It's now possible to define the number of digits for new created PIN
+                        (multiotp -config default-pin-digits=n)
+                   ENH: It's now possible to generate the HTML provisioning file by command line
+                        (multiotp -htmlinfo username /full/path/to/username.html or
+                         multiotp -htmlinfo /full/path/to/folder/ to generate files for all users)
+                   ENH: Embedded Windows nginx edition updated to version 1.25.3
+                   ENH: Embedded Windows internal tools updated (wget 1.21.4 and fart 1.99d)
+                   ENH: Embedded Windows freeradius is now launched using NSSM (instead of SRVANY)
+2023-11-23 5.9.7.0 FIX: Better Windows nginx configuration support (path backslashes replaced by slashes)
+                   ENH: Embedded Windows nginx edition updated to version 1.24.0
+                   ENH: Embedded Windows PHP edition updated to version 8.2.13
+                   ENH: Better hardware/model detection
+                   ENH: Documentation enhanced with instructions for RDWeb on Windows
+                   ENH: Upgrade of some internal tools
+2023-10-12 5.9.6.9 ENH: Better internal configuration organization
+2023-09-22 5.9.6.7 ENH: Documentation updated for "Configuring multiOTP with FreeRADIUS 3.x under Linux"
+                   ENH: Without2FA tokens cannot be used for multi_account connection
+                   ENH: Added documentation for Linux SSH login with multiOTP using PAM
+2023-08-09 5.9.6.6 FIX: Prefix PIN information was sometimes missing on the provisioning info
+                   ENH: New Raspberry Pi distribution binary
+2023-07-07 5.9.6.5 FIX: Better Raspberry Pi support
+                   FIX: ShowLog() method (used by -showlog option) was buggy
+2023-05-10 5.9.6.1 FIX: Automated concurrent access for the same user with "Without2FA" token could corrupt the user file
+                   FIX: Any files backend operation is now secured with explicit lock mechanism
+                   ENH: Template updated to print bigger QRcode for "MOTP-XML" tokens
+2023-05-04 5.9.5.7 FIX: Weekly anonymized stats date was not always updated
+                   FIX: Adding -tokenslist command in CLI mode (was in the documentation, but was missing)
+                   FIX: Remove a debug line displaying sometimes "COMMDN:$command\n";
+                   FIX: Some minor PHP notice corrections
+                   FIX: Template updated to display correct information for "Without2FA" tokens
+                   FIX: Enhanced backup process, some configuration may be missing in the backup depending the initial firmware version
+                   ENH: Adding on-premises smsgateway (https://github.com/multiOTP/SMSGateway) as a new SMS provider
+                   ENH: Better warning messages when CheckUserLdapPassword failed
+                   ENH: Embedded documentation enhanced
+2023-01-19 5.9.5.5 ENH: LDAP filter can be customized using SetLdapFilter() method
+                        ({cn_identifier}, {username}, and {groups_filtering} placeholders are supported)
+                   ENH: Full PHP 8.x support (tested with 8.2.1 and 8.1.14),
+                        with backward compatibility support (7.x, >=5.4.x)
+                   ENH: Enhanced AD/LDAP paging support
+2022-12-31 5.9.5.3 ENH: Embedded Windows nginx edition updated to version 1.22.1
+                   ENH: Embedded Windows PHP edition updated to version 8.2.0
+                   ENH: PHP 8.2.x deprecated code cleaned (nullable trim, dynamic properties, PostgreSQL command without connection argument)
+                   ENH: Enhanced sms library (MultiotpSms), new eCall API implementation, new ASPSMS API implementation
+                   ENH: Better MySQL error handling
+                   ENH: Better PostgreSQL error handling
+2022-11-11 5.9.5.1 FIX: Windows nginx subfolders are now protected
+                   ENH: It's now possible to define a special AD/LDAP group to attribute "Without2FA" token to specific users
+                   ENH: Default username and password are not displayed anymore if default password has been changed
+2022-11-04 5.9.4.0 ENH: Enhanced multiOTP Credential Provider
+2022-10-21 5.9.3.1 FIX: Better special characters support in username and password
+                   ENH: The locked accounts list now also list the temporary delayed accounts
+                   ENH: Accounts with Without2FA tokens can now also be stored in cache
+2022-08-10 5.9.2.1 ENH: Enhanced Without2FA support, bypassing the 2FA in Credential Provider
+                   ENH: Command -iswithout2fa added as a CLI option (to check if a token is needed)
+2022-06-17 5.9.1.0 ENH: Enhanced multiOTP Credential Provider
+                   ENH: Additional CLI option -nt-key-only added
+2022-05-26 5.9.0.3 FIX: Issue with /run/php when a Docker container is restarted
+                   FIX: {MultiOtpVersion} is now correctly replaced in scratchtemplate.html
+                   ENH: {MultiotpUserDisplayName} tag (AD/LDAP DisplayName) can be used in templates
+2022-05-20 5.9.0.2 FIX: User account containing octal encoded ISO characters are now also converted to UTF
+2022-05-18 5.9.0.1 FIX: Set specific flags to run Perl scripts from FreeRADIUS
+2022-05-18 5.9.0.0 FIX: User account containing special ISO characters are now also converted to UTF
+                   ENH: New Hyper-V and OVA appliances available (version 011, based on Debian 11)
+                   ENH: Scratchlist can be generated from the Web GUI
+2022-05-08 5.8.8.4 ENH: Better docker support (also for Synology)
+2022-05-08 5.8.8.1 ENH: Add Raspberry Pi Bullseye 11.0 support
+2022-04-28 5.8.7.0 ENH: PHP 7.4 deprecated code cleaned
+                   ENH: Embedded Windows nginx edition updated to version 1.21.6
+                   ENH: Embedded Windows PHP edition updated to version 7.4.29
+                   ENH: New MariaDB/MySQL indexes handling during schema creation and schema updates
+                   ENH: Enhanced internal tests
+2022-04-14 5.8.6.1 FIX: Token "Without2FA" where not working all time with LDAP users
+                   ENH: Telnyx SMS provider support
+                   ENH: PHP 7.4 deprecated code cleaned
+                   ENH: Email token is now supported for Credential Provider
+                   ENH: In CLI check, if username doesn't exist, it try automatically a shorter domain name step by step
+2022-01-14 5.8.5.1 ENH: Embedded Windows nginx edition updated to version 1.21.4
+2021-11-18 5.8.3.2 ENH: Enhanced multiOTP Credential Provider support
+2021-09-14 5.8.3.0 ENH: New VM support (Debian Bullseye 11.0, PHP 7.4, FreeRADIUS 3.0.21, Nginx 1.18.0)
+                   ENH: Removed multicast support on the network card
+2021-08-19 5.8.2.9 ENH: Added compatibility with new multiOTP Credential Provider (5.8.2 and further)
+2021-06-04 5.8.2.4 ENH: Detect Credential Provider Request and force the no prefix option
+2021-05-19 5.8.2.3 FIX: Dockerfile updated (php-bcmath added)
+2021-04-08 5.8.2.1 ENH: eDirectory LDAP server support
+2021-03-25 5.8.1.9 FIX: Cookie privacy (httponly and secure) backported to previous virtual appliances
+                   ENH: Cookie privacy (httponly and secure) are now handled in the application directly
+                   ENH: Weak SSL ciphers disabled
+                   ENH: Better Docker support
+                   ENH: Better log handling
+2021-03-21 5.8.1.2 ENH: Test (1 == GetUserPrefixPin()) replaced by IsUserPrefixPin()
+2021-03-14 5.8.1.1 FIX: In some cases, the HOTP/TOTP was not well computed
+2021-03-21 5.8.1.2 FIX: Dockerfile corrected, apt-offline removed
+                   ENH: Enhanced log file handling
+2021-03-14 5.8.1.1 FIX: In some cases, the HOTP/TOTP was not well computed
+2021-02-12 5.8.1.0 ENH: Enhanced Web GUI accounts list (green=AD/LDAP synced, orange = delayed, red=locked)
+2020-12-11 5.8.0.7 ENH: -sync-delete-retention-days= option is set by default to 30 days
+2020-12-11 5.8.0.6 ENH: VM version 010 support  (Debian Buster 10.5, PHP 7.3, FreeRADIUS 3.0.17)
+                   ENH: MySQL optimization
+                   ENH: Enhanced windows command line scripts (automatic administrator level)
+2020-09-20 5.8.0.2 ENH: New -sync-delete-retention-days= option in order to purge inexistent AD/LDAP users
+                        (SetSyncDeleteRetentionDays and GetSyncDeleteRetentionDays method)
+2020-08-31 5.8.0.0 FIX: Too many ReadConfigData loop during initialization
+                   FIX: Better unicode handling, multibyte fonctions also for mb_substr()
+                   FIX: A device file was searched with the name of the FreeRADIUS Client-Shortname
+                   ENH: Raspberry Pi 4B support
+                   ENH: New unified distribution
+                   ENH: Debian Buster 10.5 support
+                   ENH: Enhanced PHP 7.3 support
+                   ENH: Better mysqli support for alternate connection port
 2019-10-23 5.6.1.5 FIX: Separated configuration/statistics storage handling
+                   ENH: Generic web based SMS provider support
 2019-10-22 5.6.1.3 ENH: Better PHP 7.3 support
                    ENH: Base32 encoder/decoder new implementation
                    ENH: During WriteConfigData, loop on the current values, and check with the old values
@@ -469,7 +459,8 @@ CHANGE LOG OF RELEASED VERSIONS
                    For _user_data, default values are now extracted from the definition array
                    QRcode generation for mOTP (motp://[SITENAME]:[USERNAME]?secret=[SECRET-KEY])
 2015-07-15 4.3.2.5 Calling multiotp CLI without parameter returns now error code 30 (instead of 19)
-2015-06-24 4.3.2.4 multi_account automatic support
+2015-06-24 4.3.2.4 multi_account automatic support (multi_account is activated when
+                    "multi_account" is set as description of the account (also with AD/LDAP sync)
                    Scratch password generation (UTF)
 2015-06-10 4.3.2.3 Enhancements for the Dev(Talks): demo
 2015-06-09 4.3.2.2 Empty users are refused
@@ -650,9 +641,10 @@ CHANGE LOG OF RELEASED VERSIONS
 
 CONTENT OF THE PACKAGE
 ======================
-In the credential-provider:
-- the installer of multiOTP Credential Provider for Windows 7/8/8.1/10/2012(R2)/2016
+- the MSI installer of multiOTP Credential Provider for Windows 7/8/8.1/10/2012(R2)/2016
+  must be downloaded separately on https://download.multiotp.net/credential-provider/
 
+```
 In the linux folder:
 - multiotp.php             : command line tool (merge of the header and the class, external files also included)
 - multiotp.class.php       : the main file, it is the class itself, external files are already included
@@ -662,16 +654,17 @@ In the linux folder:
 - test-tokens.csv          : provisioning file of test tokens
 + oath subfolder           : contains provisioning files for oath test tokens
 + templates folder         : all templates files needed to generate the provisioning pages from the web GUI
-```
+
 *******************************************************************************
 ***  FOR THESE PHP FILES, THE BACKEND IS FILE BASED AND THE CONFIG AND      ***
 ***  BACKEND FOLDERS ARE RELATIVE AND JUST BELOW THE MAIN MULTIOTP FOLDER   ***
 *******************************************************************************
 ```
 
+```
 In the raspberry folder:
 - all necessary files to be able to create your own strong authentication device using a Raspberry Pi
-```
+
 *******************************************************************************
 ***  FOR THESE PHP FILES, THE BACKEND IS SET BY DEFAULT AS FILE BASED AND   ***
 ***  THE CONFIG AND BACKEND FOLDERS DEFINED TO BE LOCATED IN /etc/multiotp/ ***
@@ -684,19 +677,21 @@ In the raspberry folder:
 *******************************************************************************
 ```
 
+```
 In the sources folder:
 - multiotp.class.php       : the main file, it is the class itself, which requires external files
 - multiotp.cli.header.php  : header file to be merged with the class for a single file command line tool
 - multiotp.server.php      : the web service file, which requires the class as external file
 - check.multiotp.class.php : PHP script to validate some multiOTP functionalities
 + contrib subfolder        : contains all external files required by the multiotp.class.php file
-```
+
 *******************************************************************************
 ***  FOR THESE PHP FILES, THE BACKEND IS FILE BASED AND THE CONFIG AND      ***
 ***  BACKEND FOLDERS ARE RELATIVE AND JUST BELOW THE MAIN MULTIOTP FOLDER   ***
 *******************************************************************************
 ```
 
+```
 In the windows folder:
 - multiotp.exe             : command line tool for Windows (digitally signed) with embedded PHP 7.x
 - multiotp.class.php       : the main file, it is the class itself, external files are already included
@@ -720,7 +715,7 @@ In the windows folder:
 + webservice subfolder     : all necessary files to be able to install a Windows multiOTP web service
                              (using Nginx as the light web server on port 8112,
                               or as a secured SSL connection (https) on port 8113)
-```
+
 *******************************************************************************
 ***  FOR THESE PHP FILES, THE BACKEND IS FILE BASED AND THE CONFIG AND      ***
 ***  BACKEND FOLDERS ARE RELATIVE AND JUST BELOW THE MAIN MULTIOTP FOLDER   ***
@@ -842,17 +837,13 @@ in the radius server and provide the IP address(es) of the device(s)
 (often called NAS) and their shared Secret.
 
 If you want to have strong authentication on Windows logon, have a look at the
-open source multiOTPCredentialProvider which is based on MultiotpCPV2RDP from
-arcadejust and MultiOneTimePassword Credential Provider from Last Squirrel IT.
-It works with Windows 7/8/8.1/10/2012(R2)/2016 in both 32 and 64 bits.  
+open source project multiOTPCredentialProvider which is based on MultiotpCPV2RDP
+from arcadejust and MultiOneTimePassword Credential Provider from Last Squirrel IT.
+It works with Windows 7/8/8.1/10/11/2012(R2)/2016/2019/2022 in 64 bits.  
 The Credential Provider does not need any RADIUS connection! It uses instead a
 local version of multiOTP which can be configured as a client of a
 centralized server (with caching support).
-(http://download.multiotp.net/credential-provider/)
-
-LSE Experts provides a commercial Radius Credential Provider which can talk
-directly with a radius server.
-(http://www.lsexperts.de)
+(https://download.multiotp.net/credential-provider/)
 
 When the backend is set, it's time to create/define the tokens. You will have
 to select hardware or software token generators for your users. Currently, the
@@ -1037,7 +1028,7 @@ now be displayed (like with the same option used with ntlm_auth).
 
 1) Create a new module file called "multiotp" in etc/raddb/modules/ containing:  
 ```
-    # Exec module instance for multiOTP (http://www.multiotp.net/).  
+    # Exec module instance for multiOTP (https://www.multiotp.net/).  
     # for Linux  : replace '/path/to/multiotp' with the actual path to the multiotp.php file, including the full file name.
     # for Windows: replace '/path/to' with the actual path to the multiotp.exe file (also with /), including the fulle file name.
     exec multiotp {  
@@ -1050,61 +1041,61 @@ now be displayed (like with the same option used with ntlm_auth).
 ```
 
 2) In the configuration file called "default" in etc/raddb/sites-enabled/  
-    a) Add the multiOTP handling  
 ```
+    a) Add the multiOTP handling  
     #  
-    # Handle multiOTP (http://www.multiotp.net/) authentication.  
+    # Handle multiOTP (https://www.multiotp.net/) authentication.  
     # This must be added BEFORE the first "pap" entry found in the file.  
     multiotp  
 ```
 
-    b) Add the multiOTP authentication handling  
 ```
+    b) Add the multiOTP authentication handling  
     #  
-    # Handle multiOTP (http://www.multiotp.net/) authentication.  
+    # Handle multiOTP (https://www.multiotp.net/) authentication.  
     # This must be added BEFORE the first "Auth-Type PAP" entry found in the file.  
     Auth-Type multiotp {  
         multiotp  
     }  
 ```
 
-    c) Comment the first line containing only "chap"  
 ```
+    c) Comment the first line containing only "chap"  
     #chap is now handled by multiOTP  
 ```
 
-    d) Comment the first line containing only "mschap"  
 ```
+    d) Comment the first line containing only "mschap"  
     #mschap is now handled by multiOTP  
 ```
 
 3) In the configuration file called "inner-tunnel" in etc/raddb/sites-enabled/  
     
-    a) Add the multiOTP handling  
 ```
+    a) Add the multiOTP handling  
     #  
-    # Handle multiOTP (http://www.multiotp.net/) authentication.  
+    # Handle multiOTP (https://www.multiotp.net/) authentication.  
     # This must be added BEFORE the first "pap" entry found in the file.  
     multiotp  
 ```
 
-    b) Add the multiOTP authentication handling  
 ```
+    b) Add the multiOTP authentication handling  
     #  
-    # Handle multiOTP (http://www.multiotp.net/) authentication.  
+    # Handle multiOTP (https://www.multiotp.net/) authentication.  
     # This must be added BEFORE the first "Auth-Type PAP" entry found in the file.  
     Auth-Type multiotp {  
         multiotp  
     }  
 ```
 
-    c) Comment the first line containing only "chap"  
 ```
+    c) Comment the first line containing only "chap"  
     #chap is now handled by multiOTP  
 ```
 
-    d) Comment the first line containing only "mschap"  
 ```
+    d) Comment the first line containing only "mschap"  
     #mschap is now handled by multiOTP  
 ```
 
@@ -1112,7 +1103,7 @@ now be displayed (like with the same option used with ntlm_auth).
    Add the multiOTP authorization policy  
 ```
     #  
-    # Handle multiOTP (http://www.multiotp.net/) authorization policy.  
+    # Handle multiOTP (https://www.multiotp.net/) authorization policy.  
     # This must be added just before the last "}"  
     multiotp.authorize {  
         if (!control:Auth-Type) {  
@@ -1131,7 +1122,7 @@ now be displayed (like with the same option used with ntlm_auth).
    Add the clients IP, mask and secret that you want to authorize.  
 ```
     #  
-    # Handle multiOTP (http://www.multiotp.net/) for some clients.  
+    # Handle multiOTP (https://www.multiotp.net/) for some clients.  
     client 0.0.0.0 {  
         netmask = 0  
         secret = multiotpsecret  
@@ -1149,10 +1140,10 @@ now be displayed (like with the same option used with ntlm_auth).
 
 Some values can go back to FreeRADIUS:
 
-a) Set the right format options for FreeRADIUS:  
+ * Set the right format options for FreeRADIUS:  
    multiotp -config radius-reply-attributor=" += " radius-reply-separator=","
    
-b) Set multiOTP to send back to FreeRADIUS the group of the authenticated user:  
+ * Set multiOTP to send back to FreeRADIUS the group of the authenticated user:  
    multiotp -config group-attribute="Filter-Id"  
 
 
@@ -1168,7 +1159,7 @@ Before starting or asking for help
 - Make sure the otp script is executable chmod +x /path/to/multiotp.php
 - Verify multiotp is setup correctly by calling the script from the commandline with the appropriate arguments
 
-1) Create 'raddb/modules/multiotp' and add the following, this will create a new instance of the exec module:
+1) Create '/etc/freeradius/3.0/mods-available/multiotp' and add the following, this will create a new instance of the exec module:
 ```
 # Exec module instance for multiOTP
 # Replace '/path/to' with the actual path to the multiotp.php file
@@ -1176,12 +1167,17 @@ exec multiotp {
         wait = yes
         input_pairs = request
         output_pairs = reply
-        program = "/path/to/multiotp.php %{User-Name} %{User-Password} -request-nt-key -src=%{Packet-Src-IP-Address} -chap-challenge=%{CHAP-Challenge} -chap-password=%{CHAP-Password} -ms-chap-challenge=%{MS-CHAP-Challenge} -ms-chap-response=%{MS-CHAP-Response} -ms-chap2-response=%{MS-CHAP2-Response}"
+		program = "/path/to/multiotp.php -base-dir='/path/to/multiotp/' '%{User-Name}' '%{User-Password}' -src='%{Packet-Src-IP-Address}' -tag='%{Client-Shortname}' -mac='%{Called-Station-Id}' -calling-ip='%{Framed-IP-Address}' -calling-mac='%{Calling-Station-Id}' -chap-challenge='%{CHAP-Challenge}' -chap-password='%{CHAP-Password}' -ms-chap-challenge='%{MS-CHAP-Challenge}' -ms-chap-response='%{MS-CHAP-Response}' -ms-chap2-response='%{MS-CHAP2-Response}' -state='%{State}'"		
         shell_escape = yes
 }
 ```
 
-2) Copy module/mschap to module/multiotpmschap. Change the following line in multiotpmschap:
+2) Enable multiotp module by creating a symbolic link
+```
+ln -s /etc/freeradius/3.0/mods-available/multiotp /etc/freeradius/3.0/mods-enabled/multiotp
+```
+
+3) Copy /etc/freeradius/3.0/mods-available/mschap to /etc/freeradius/3.0/mods-available/multiotpmschap. Change the following line in multiotpmschap:
 ```
 "mschap {"
 ```
@@ -1192,82 +1188,142 @@ to
 
 Also change ntlm_auth variable:
 ```
-ntlm_auth = "/path/to/multiotp.php %{User-Name} %{User-Password}
--request-nt-key -src=%{Packet-Src-IP-Address}
--chap-challenge=%{CHAP-Challenge} -chap-password=%{CHAP-Password}
--ms-chap-challenge=%{MS-CHAP-Challenge}
--ms-chap-response=%{MS-CHAP-Response}
--ms-chap2-response=%{MS-CHAP2-Response}"
+ntlm_auth = "/path/to/multiotp.php -base-dir='/path/to/multiotp/' '%{User-Name}' '%{User-Password}' -nt-key-only -src='%{Packet-Src-IP-Address}' -tag='%{Client-Shortname}' -mac='%{Called-Station-Id}' -calling-ip='%{Framed-IP-Address}' -calling-mac='%{Calling-Station-Id}' -chap-challenge='%{CHAP-Challenge}' -chap-password='%{CHAP-Password}' -ms-chap-challenge='%{MS-CHAP-Challenge}' -ms-chap-response='%{MS-CHAP-Response}' -ms-chap2-response='%{MS-CHAP2-Response}' -state='%{State}'"
 ```
 
-3) Edit 'raddb/policy.conf' and add the following to override the authorize method of the exec module: (or add a new multiotp file in the policy.d folder)
-policy {
+4) Enable multiotpmschap module by creating a symbolic link
 ```
-    # Change to a specific prefix if you want to deal with normal PAP authentication as well as OTP
-    # e.g. "multiotp_prefix = 'otp:'"
-    multiotp_prefix = ''
-    multiotp.authorize {
-        # This test force multiOTP for any MS-CHAP(v2) attempt
-        if (control:Auth-Type == MS-CHAP) {
-            update control {
-                Auth-Type := multiotpmschap
-            }
-        }
-        # This test force multiOTP for any MS-CHAP(v2) attempt
-        elsif (control:Auth-Type == mschap) {
-            update control {
-                Auth-Type := multiotpmschap
-            }
-        }
-        # This test force multiOTP for any CHAP attempt
-        elsif (control:Auth-Type == chap) {
-            update control {
-                Auth-Type := multiotp
-            }
-        }
-        # This test is for decimal OTP code only, otherwise you will have to change it
-        #  elsif (!control:Auth-Type && User-Password =~ /^${policy.multiotp_prefix}([0-9]{10})$/) {
-        #
-        # Use this simple test for non decimal only OTP code: elsif (!control:Auth-Type) {
-        #
-        # This test force multiOTP for any other attempt like PAP
-        elsif (!control:Auth-Type) {
-            update control {
-                Auth-Type := multiotp
-            }
+ln -s /etc/freeradius/3.0/mods-available/multiotpmschap /etc/freeradius/3.0/mods-enabled/multiotpmschap
+```
+
+5) Edit /etc/freeradius/3.0/mods-available/perl file. Change the following line :
+```
+filename =
+```
+to
+```
+filename = /path/to/multiotp/scripts/multiotp.pl
+```
+
+Since 5.8.3.0 and FreeRADIUS 3.0.18, set the perl flags to -U
+```
+perl_flags = "-U"
+```
+
+6) Enable perl module by creating a symbolic link
+```
+ln -s /etc/freeradius/3.0/mods-available/perl /etc/freeradius/3.0/mods-enabled/perl
+```
+
+7)If necessary change multiOTP path in the multiOTP perl file scripts/multiotp.pl
+```
+my $output=`/usr/local/bin/multiotp/multiotp.php -base-dir='/usr/local/bin/multiotp/' "$multiotp_
+```
+to
+
+```
+my $output=`/path/to/multiotp.php -base-dir='/path/to/multiotp/' "$multiotp_
+```
+
+
+7) Create /etc/freeradius/3.0/policy.d/multiotp file and add the following to override the authorize method of the exec module:
+```
+# Change to a specific prefix if you want to deal with normal PAP authentication as well as OTP
+# e.g. "multiotp_prefix = 'otp:'"
+multiotp_prefix = ''
+multiotp.authorize {
+   # This test force multiOTP for any MS-CHAP(v2),CHAP and PAP attempt
+    if (control:Auth-Type == mschap) {
+          update control {
+                  Auth-Type := multiotpmschap
+          }
+    }
+    elsif (control:Auth-Type == chap) {
+          update control {
+                  Auth-Type := multiotp
+          }
+    }
+    elsif (!control:Auth-Type) {
+        update control {
+            Auth-Type := multiotp
         }
     }
 }
 ```
 
-4) Edit your virtual server file, the default for the outer server is 'raddb/sites-available/default'
-
-5) Add a call to multiotp before the pap module in authorize:
+8) Enable files and add perl just after files, in the authorize section of /etc/freeradius/3.0/sites-available/default. Add the following lines:
+...
+    files
 ```
-authorize {
-    ...
+    perl #multiotp
+    if (ok || updated) { #multiotp
+        update control { #multiotp
+           Auth-Type := Perl #multiotp
+           Client-Shortname = "%{Client-Shortname}" #multiotp
+           Packet-Src-IP-Address = "%{Packet-Src-IP-Address}" #multiotp
+        } #multiotp
+    } #multiotp
+```
+
+After logintime add the following line :
+...
+	expiration
+	logintime
+```
     # Handle multiotp authentication
     multiotp
-
-    # Handle other PAP authentication
-    pap
-    ...
-}
 ```
 
-6) Create the multiotp sub-section in authenticate:
-```
+9) Add a call to multiotp before the pap module in authenticate section of /etc/freeradius/3.0/sites-available/default. Add the following lines:
+...
 authenticate {
+```
+Auth-Type multiotp {
+    multiotp
+} #multiotp
+Auth-Type multiotpmschap {
+    multiotpmschap
+} #multiotpmschap
+Auth-Type Perl { #multiotp
+    perl #multiotp
+} #multiotp
+```
+
+10) Add a call to perl in accounting section of /etc/freeradius/3.0/sites-available/default. Add the following lines:
+...
+accounting {
+```
+    perl #multiotp
+```
+
+11) Enable multiotp, in the authorize section of /etc/freeradius/3.0/sites-available/inner-tunnel. Add the following lines:
+
+After logintime add the following line :
+...
+	expiration
+	logintime
+```
+    # Handle multiotp authentication
+    multiotp
+```
+
+...
+authenticate {
+```
     Auth-Type multiotp {
         multiotp
-    }
+    } #multiotp
     Auth-Type multiotpmschap {
         multiotpmschap
-    }
-}
+    } #multiotpmschap
+    Auth-Type Perl { #multiotp
+        perl #multiotp
+    } #multiotp
+	
 ```
 
-7) Start the server up in debug mode radiusd -X and test authentication
+
+12) Start the server up in debug mode radiusd -X and test authentication
 
 
 HOW TO CONFIGURE MULTIOTP TO SYNCHRONIZED THE USERS FROM AN ACTIVE DIRECTORY ?
@@ -1386,10 +1442,16 @@ HOW TO CONFIGURE MULTIOTP TO SYNCHRONIZED THE USERS FROM A STANDARD LDAP ?
 15) Set the transaction time limit
     multiotp -config ldap-time-limit=30
 
-16) Activate the AD/LDAP support (0|1):
+16) (EXPERT ONLY) If needed, you can change the LDAP filter.
+    By default, the LDAP filter for standard LDAP is :
+      "(&(|(objectClass=posixAccount)(objectClass=user))({cn_identifier}={username}))"
+    You can use the following placeholders: {cn_identifier}, {username}, and {groups_filtering}
+    multiotp -config ldap-filter="(&(|(objectClass=posixAccount)(objectClass=user))({cn_identifier}={username}))"
+
+17) Activate the AD/LDAP support (0|1):
     multiotp -config ldap-activated=1
    
-17) Let's go for an AD/LDAP users synchronisation !
+18) Let's go for an AD/LDAP users synchronisation !
     (users removed or deactivated in the AD/LDAP are deactivated in multiOTP)
     multiotp -debug -display-log -ldap-users-sync
 
@@ -1441,8 +1503,8 @@ B) On the client(s)
 HOW TO INSTALL A LOCAL ONLY STRONG AUTHENTICATION ON A WINDOWS MACHINE ?
 ========================================================================
 1) Install multiOTPCredentialProvider, which contains also multiOTP inside.
-   It works with Windows 7/8/8.1/10/2012(R2)/2016 in both 32 and 64 bits.
-   (http://download.multiotp.net/credential-provider/)
+   It works with Windows 7/8/8.1/10/11/2012(R2)/2016/2019/2022 in 64 bits.
+   (https://download.multiotp.net/credential-provider/)
 2) During the installation, specify the folder on the client where the
    multiotp.exe file and folders must be installed and configured.
 3) In the wizard, leave the URL of the multiOTP server(s) empty.
@@ -1453,13 +1515,12 @@ HOW TO INSTALL A LOCAL ONLY STRONG AUTHENTICATION ON A WINDOWS MACHINE ?
 7) To disable the Credential Provider, uninstall it from Windows,
    or execute multiOTPCredentialProvider-unregister.reg
 
-HOW TO INSTALL A CENTRALIZED STRONG AUTHENTICATION SERVER
-FOR STRONG AUTHENTICATION ON WINDOWS DESKTOPS OR RDP ?
-=========================================================
+HOW TO INSTALL A CENTRALIZED 2FA SERVER FOR WINDOWS DESKTOPS OR RDP LOGIN ?
+===========================================================================
 1) Install a client/server multiOTP environment like explained above.
 2) On each client, install multiOTPCredentialProvider .
-   It works with Windows 7/8/8.1/10/2012(R2)/2016 in both 32 and 64 bits.
-   (http://download.multiotp.net/credential-provider/)
+   It works with Windows 7/8/8.1/10/11/2012(R2)/2016/2019/2022 in 64 bits.
+   (https://download.multiotp.net/credential-provider/)
 3) During the installation, specify the folder on the client where the
    multiotp.exe file and folders must be installed and configured.
 4) In the wizard, type the URL of the multiOTP server(s).
@@ -1470,10 +1531,223 @@ FOR STRONG AUTHENTICATION ON WINDOWS DESKTOPS OR RDP ?
    or execute multiOTPCredentialProvider-unregister.reg
 
 
+ADDING 2FA WITH MULTIOTP TO THE REMOTE DESKTOP WEB ACCESS (RDWEB) ON WINDOWS
+============================================================================
+For these instructions, we assume that multiOTP is installed in the
+folder C:\multiOTP
+After Remote Desktop Web Access installation, RDWeb files are stored in the
+folder C:\Windows\Web\RDWeb\
+
+1) Edit the file C:\Windows\Web\RDWeb\Web.config, and add three lines right after
+   the appSettings block like this:
+```
+   <?xml version="1.0"?>
+   <configuration>
+       <appSettings>
+           <!-- multiOTP addon begin -->
+           <add key="MultiOTPPathAndName" value="C:\\multiOTP\\multiotp.exe" />
+           <add key="OTPUsernameRegex" value="^[0-9a-zA-Z]*$" />
+           <add key="OTPRegex" value="^[0-9]{6}$" />
+           <!-- multiOTP addon end -->
+           ...
+```
+
+2) Edit the file C:\Windows\Web\RDWeb\Pages\en-US\login.aspx (en-US is for the
+   american english version of the page), and add three lines here:
+```
+   ...
+   <% @Import Namespace="System.Web.Security.AntiXss" %>
+   <!-- multiOTP addon begin -->
+   <% @Import Namespace="System.Diagnostics" %>
+   <% @Import Namespace="System.Text.RegularExpressions" %>
+   <% @Import Namespace="System.Configuration" %>
+   <!-- multiOTP addon end -->
+   <script language="C#" runat=server>
+   ...
+```
+
+3) Always in the same file login.aspx, add this line after Localizable Text:
+```
+   ...
+   // Localizable Text
+   //
+   // multiOTP addon begin
+  const string L_OTPLabel_Text = "OTP:";
+   // multiOTP addon end
+   const string L_DomainUserNameLabel_Text = "Domain\\user name:";
+   ...
+```
+
+4) Always in the same file login.aspx, at the end of the LoginPageLoadAsync()
+   method, add this line:
+```
+   ...
+       // multiOTP addon begin
+       if ( Request.Form["UserOTP"] != null ) Session["UserOTP"] = (string)Request.Form["UserOTP"];	
+       // multiOTP addon end
+   }
+
+   //
+   // Special case to handle 'ServerConfigChanged' error from Response's Location header.
+   //
+   try
+   ...
+```
+
+5) Always in the same file login.aspx, replace the method
+   SafeRedirect(strReturnUrlPage); with the following lines:
+```
+   ...
+   if ( HttpContext.Current.User.Identity.IsAuthenticated == true )
+   {
+       // multiOTP addon begin
+       string strOTPUsername = HttpContext.Current.User.Identity.Name;
+       if (strOTPUsername.Split('\\').Length > 1) strOTPUsername = strOTPUsername.Split('\\')[1];
+       if (strOTPUsername.Split('@').Length > 0) strOTPUsername = strOTPUsername.Split('@')[0];
+
+       bool bOTPAuthenticated = false;
+
+       if (Session["UserOTP"] != null)
+       {
+         string strOTP = (string)Session["UserOTP"];
+         if (!string.IsNullOrEmpty(strOTP) && Regex.Match(strOTP,ConfigurationManager.AppSettings["OTPRegex"]).Success && !string.IsNullOrEmpty(strOTPUsername) && Regex.Match(strOTPUsername,ConfigurationManager.AppSettings["OTPUsernameRegex"]).Success)
+         {
+           ProcessStartInfo oOTPStartInfo = new ProcessStartInfo();
+           oOTPStartInfo.FileName = ConfigurationManager.AppSettings["MultiOTPPathAndName"];
+           oOTPStartInfo.Arguments = strOTPUsername + " " + strOTP;
+           oOTPStartInfo.CreateNoWindow = true;
+           oOTPStartInfo.UseShellExecute = true;
+           Process oOTP = Process.Start(oOTPStartInfo);
+           oOTP.WaitForExit();
+           bOTPAuthenticated = (oOTP.ExitCode == 0);
+         }
+       }
+
+       if(bOTPAuthenticated)
+       {
+         if (String.IsNullOrEmpty(strReturnUrlPage))
+           Response.Redirect("default.aspx");
+         else
+           SafeRedirect(strReturnUrlPage);
+       }
+       else
+       {
+         FormsAuthentication.SignOut(); 
+         bFailedLogon = true;
+         if (bFailedAuthorization) bFailedAuthorization = false; 
+       }
+       // multiOTP addon end
+       // multiOTP remove begin
+       // SafeRedirect(strReturnUrlPage);
+       // multiOTP remove end
+   }
+   ...
+```
+
+6) Always in the same file login.aspx, after the "UserPass" input, add the
+   following lines:
+```
+   ...
+           <label><input id="UserPass" name="UserPass" type="password" class="textInputField" runat="server" size="25" autocomplete="off" /></label>
+           </td>
+       </tr>
+       </table>
+   </td>
+   </tr>
+
+   <!-- multiOTP addon begin -->
+   <tr>
+     <td>
+       <table width="300" border="0" cellpadding="0" cellspacing="0">
+         <tr>
+           <td width="130" align="right"><%=L_OTPLabel_Text%></td>
+           <td width="7"></td>
+           <td align="right">
+             <label><input id="UserOTP" name="UserOTP" type="password" class="textInputField" runat="server" size="23" autocomplete="off" /></label>
+           </td>
+         </tr>
+       </table>
+     </td>
+   </tr>
+   <!-- multiOTP addon end -->
+   ...
+```
+
+7) Be sure that that the RDWeb Application Pool Account has read/write access
+   to the installed multiOTP folder and subfolder (C:\multiOTP)
+
+8) In order to have some logs, you will have to enable the log option in the
+   multiotp.ini (C:\multiOTP\config\multiotp.ini):
+```
+   ...
+   log=1
+   ...
+```
+
+9) Be sure to restart IIS on your Windows RDWeb server
+
+
+SAME WINDOWS GENERIC ACCOUNT WITH MULTIPLE TWO-FACTOR AUTHENTICATION ACCOUNTS 
+=============================================================================
+If you have to share the same generic Windows account, but you still need
+2FA authentication for each user (like for a specific industrial computer in a
+24/7/365 process), you can do the following configuration:
+1) Create (or sync with AD/LDAP) a multiOTP account for the generic account
+2) In multiOTP, set the description of the generic account to "multi_account"
+   (if the account is synced by AD/LDAP, put the description in the AD/LDAP)
+3) Create (or sync with AD/LDAP) the accounts of each users
+4) On the login screen of the computer, use the following credentials:
+   - Account : generic Windows account
+   - Password : password of the generic Windows account
+   - OTP : [username of the specific user][space][OTP code of the specific user]
+
+
+USING MULTIOTP ON LINUX FOR SSH LOGIN
+=====================================
+0) Configure OpenSSH and PAM
+   Configure your OpenSSH server to request the PassCode (PinCode+OTP)
+   to the radius server. For this purpose we will use a radius PAM agent.
+
+1) PAM configuration for OpenSSH server:
+   Edit the file /etc/pam.d/sshd with this configuration.
+   Comment the username/password line and add the PAM library.
+   Be sure you have the PAM radius library.
+```
+   #auth required pam_stack.so service=system-auth
+   auth required /lib/security/pam_radius_auth.so
+```
+
+2) Specify the Radius Server.
+   Create and edit a file called server in /etc/raddb
+   with the Radius IP,port and the shared secret key.
+```
+   #Server[:port]  shared_secret      timeout (s)
+   127.0.0.1       secret             1
+   10.1.23.1:1812  myfirstpass        6
+```
+
+3) OpenSSH server (radiusd daemon) configuration:
+   Edit /etc/sshd/sshd_config and be sure PAM is
+   enabled and keyboard-interactive AuthN support.
+```
+   UsePAM yes
+   PasswordAuthentication no
+   ChallengeResponseAuthentication yes
+```
+
+4) Stop and start the OpenSSH server
+```
+   /etc/init.d/sshd stop
+   /etc/init.d/sshd start
+```
+
+5) You are now ready to test your login SSH with an software OTP :-)
+
+
 HOW TO BUILD A RASPBERRY PI STRONG AUTHENTICATION SERVER ?
 ==========================================================
 0) If you want to download a multiOTP Raspberry Pi image ready to use, follow this URL:  
-   http://download.multiotp.net/raspberry/
+   https://download.multiOTP.net/raspberry/
    
 ```
    Nano-computer name: multiotp
@@ -1487,10 +1761,10 @@ HOW TO BUILD A RASPBERRY PI STRONG AUTHENTICATION SERVER ?
    
 1) If you want to use a battery backed up Real Time Clock, install it now in your
    Raspberry Pi, the drivers for these models are included in the package:
-   - http://afterthoughtsoftware.com/products/rasclock
+   - https://afterthoughtsoftware.com/products/rasclock
    - http://www.cjemicros.co.uk/micros/products/rpirtc.shtml
-   - http://www.robotshop.com/ca/en/mini-real-time-clock-rtc-module.html
-   - http://nicegear.co.nz/raspberry-pi/high-precision-real-time-clock-for-raspberry-pi/
+   - https://www.robotshop.com/ca/en/elecrow-ds3231-high-precision-rtc-clock-module-raspberry-pi-b.html
+   - https://learningdevelopments.co.nz/products/rtc-clock-module-for-raspberry-pi
    
 2) Download the last image of Raspbian to be flashed  
    http://downloads.raspberrypi.org/raspbian_latest (currently 2017-09-07-raspbian-stretch.zip)
@@ -1540,6 +1814,13 @@ HOW TO BUILD A RASPBERRY PI STRONG AUTHENTICATION SERVER ?
     To adapt the freeradius configuration, edit the file /etc/freeradius/clients.conf.
 
 
+LDAP FILTER CUSTOMIZATION
+=========================
+You can customize your own LDAP filter. By default, the LDAP filter is empty.
+In the LDAP filter, you can use the following placeholders:
+  {cn_identifier}, {username}, {groups_filtering}
+
+
 OPENSSL OPTIONS FOR LDAPS
 =========================
 You can define how the certificate bundle is handled with the ldaptls_reqcert option.
@@ -1548,17 +1829,12 @@ You can define a custom cipher suite with the ldaptls_cipher_suite option.
 
 COMPATIBLE CLIENTS APPLICATIONS AND DEVICES
 ===========================================
-Open source multiOTPCredentialProvider, based on MultiotpCPV2RDP and mOTP-CP
-If you want to have strong authentication on Windows logon, have a look at the
-open source multiOTPCredentialProvider.  
-It works with Windows 7/8/8.1/10/2012(R2)/2016 in both 32 and 64 bits.  
+Open source project multiOTPCredentialProvider which is based on MultiotpCPV2RDP
+from arcadejust and MultiOneTimePassword Credential Provider from Last Squirrel IT.
+It works with Windows 7/8/8.1/10/11/2012(R2)/2016/2019/2022 in 64 bits.  
 The Credential Provider is using directly a local version of multiOTP which
 can be configured as a client of a centralized multiOTP server (with caching support)
 (https://github.com/multiOTP/multiOTPCredentialProvider)
-
-LSE Experts is providing a commercial Radius Credential Provider which can talk
-directly with any radius server to check the token. multiOTP will work with it.
-(http://www.lsexperts.de)
 
 Any firewall can connect with the Radius protocol to a multiOTP radius server.
 On advanced firewalls like the ZyXEL ZyWALL USG series, you can do some advanced
@@ -1581,23 +1857,23 @@ EXTERNAL PACKAGES AND SOFTWARE USED
 
     FreeRADIUS / WinRADIUS for Windows (GPLv2)
     This product contains software provided by FreeRADIUS team and its contributors.
-    http://freeradius.org/ - http://winradius.eu/
+    https://freeradius.org/ - http://www.winradius.eu/
 
     md5 JavaScript 2010 algorithm (BSD)
     Joseph Myers, Paul Johnston, Greg Holt, Will Bond
-    http://www.myersdaily.org/joseph/javascript/md5-text.html
+    https://www.myersdaily.org/joseph/javascript/md5-text.html
 
-    multiOTPCredentialProvider, based on MultiotpCPV2RDP (Apache License)
-    Credential Provider (32 and 64 bits) supporting Windows 7/8/8.1/10/2012(R2)/2016
+    multiOTP Credential Provider
+    Credential Provider (64 bits) supporting Windows 7/8/8.1/10/11/2012(R2)/2016/2019/2022
     SysCo / ArcadeJust / LastSquirrelIT 
     https://github.com/multiOTP/multiOTPCredentialProvider
 
     Nginx (BSD)
     This product contains software provided by Nginx, Inc. and its contributors.
-    http://nginx.org/
+    https://nginx.org/
     
     nssm service helper (public domain)
-    http://nssm.cc/
+    https://nssm.cc/
 
     NuSOAP - PHP Web Services Toolkit (LGPLv2.1)
     NuSphere Corporation
@@ -1605,7 +1881,7 @@ EXTERNAL PACKAGES AND SOFTWARE USED
 
     PHP (PHP License)
     Voluntary contributions made by many individuals on behalf of the PHP Group.    
-    http://www.php.net/
+    https://www.php.net/
     
     phpseclib (MIT License)
     MMVI Jim Wigginton
@@ -1617,19 +1893,19 @@ EXTERNAL PACKAGES AND SOFTWARE USED
 
     PHP radius class (LGPLv3)
     Andre Liechti
-    http://developer.sysco.ch/php/
+    https://developer.sysco.ch/php/
 
     PHP Syslog class (FREE "AS IS")
     Andre Liechti
-    http://developer.sysco.ch/php/
+    https://developer.sysco.ch/php/
 
     status_bar.php (2010) (FREE "AS IS")
     dealnews.com, Inc.
-    http://brian.moonspot.net/status_bar.php.txt or http://snipplr.com/view/29548/
+    https://snipplr.com/view/29548
 
     TCPDF (LGPLv3)
     Nicola Asuni
-    http://www.tcpdf.org/
+    https://tcpdf.org/
 
     XML Parser Class (LGPLv3)
     Adam A. Flynn - enhanced by SysCo
@@ -1639,7 +1915,7 @@ EXTERNAL PACKAGES AND SOFTWARE USED
     Tanase Laurentiu Iulian
     http://xpertmailer.sourceforge.net/
 
-    The source files can be downloaded at http://download.multiotp.net/multiotp.zip
+    The source files can be downloaded at https://download.multiOTP.net/multiotp.zip
 ```
 
  
@@ -1653,8 +1929,8 @@ MULTIOTP COMMAND LINE TOOL
 ==========================
 
 ``` 
-multiOTP 5.6.1.5 (2019-10-23)
-(c) 2010-2019 SysCo systemes de communication sa
+multiOTP 5.9.9.1 (2025-01-20)
+(c) 2010-2025 SysCo systemes de communication sa
 http://www.multiOTP.net   (you can try the [Donate] button ;-)
 
 multiotp will check if the token of a user is correct, based on a specified
@@ -1662,8 +1938,9 @@ algorithm (currently Mobile-OTP (http://motp.sf.net), OATH/HOTP (RFC 4226)
 and OATH/TOTP (RFC 6238) are implemented). PSKC format supported (RFC 6030).
 Supported encryption methods are PAP and CHAP.
 Yubico OTP format supported (44 bytes long, with prefixed serial number).
-SMS-code are supported (current providers: aspsms,clickatell,clickatell2,
-                        intellisms,nexmo,nowsms,smseagle,swisscom,custom,exec).
+SMS-code are supported (current providers: afilnet,aspsms,clickatell,
+                        clickatell2,ecall,intellisms,nexmo,nowsms,smseagle,
+                        smsgateway,swisscom,telnyx,custom,exec).
 Specific SMS sender program supported by specifying exec as SMS provider.
 
 Google Authenticator base32_seed tokens must be of n*8 characters.
@@ -1678,7 +1955,7 @@ If the PIN is not given, it is generated randomly.
 
 To quickly create a user without a prefix PIN request, use -fastcreatenopin
 
-To quickly create a user with a prefix PIN request, use -fastecreatewithpin
+To quickly create a user with a prefix PIN request, use -fastcreatewithpin
 
 If a token is locked (return code 24), you have to resync the token to unlock.
 Requesting an SMS token (put sms as the password), and typing the received
@@ -1689,6 +1966,8 @@ The check will return 0 for a correct token, and the other return code means:
 Return codes:
 
  0 OK: Token accepted 
+ 7 INFO: User requires a token 
+ 8 INFO: User can be authenticated without a token (WITHOUT2FA) 
  9 INFO: Access Challenge returned back to the client 
 10 INFO: Access Challenge returned back to the client 
 11 INFO: User successfully created or updated 
@@ -1698,7 +1977,7 @@ Return codes:
 15 INFO: Tokens definition file successfully imported 
 16 INFO: QRcode successfully created 
 17 INFO: UrlLink successfully created 
-18 INFO: SMS code request received 
+18 INFO: Static code request received 
 19 INFO: Requested operation successfully done 
 20 ERROR: User blacklisted 
 21 ERROR: User doesn't exist 
@@ -1726,6 +2005,7 @@ Return codes:
 43 ERROR: SQL entry cannot be updated 
 50 ERROR: QRcode not created 
 51 ERROR: UrlLink not created (no provisionable client for this protocol) 
+52 ERROR: HTML info not created 
 58 ERROR: File is missing 
 59 ERROR: Bad restore configuration password 
 60 ERROR: No information on where to send SMS code 
@@ -1733,16 +2013,23 @@ Return codes:
 62 ERROR: SMS provider not supported 
 63 ERROR: This SMS code has expired 
 64 ERROR: Cannot resent an SMS code right now 
+65 ERROR: SMS code request not allowed 
+66 ERROR: Email code request not allowed 
+67 ERROR: No information on where to send Email code 
+68 ERROR: Email code request received, but an error occurred during transmission 
 69 ERROR: Failed to send email 
 70 ERROR: Server authentication error 
 71 ERROR: Server request is not correctly formatted 
 72 ERROR: Server answer is not correctly formatted 
+73 ERROR: Email SMTP server not defined 
 79 ERROR: AD/LDAP connection error 
 80 ERROR: Server cache error 
 81 ERROR: Cache too old for this user, account autolocked 
 82 ERROR: User not allowed for this device 
 88 ERROR: Device is not defined as a HA slave 
 89 ERROR: Device is not defined as a HA master 
+91 ERROR: Authentication failed (without2fa token not authorized here) 
+92 ERROR: Authentication failed (bad password) 
 93 ERROR: Authentication failed (time based token probably out of sync) 
 94 ERROR: API request error 
 95 ERROR: API authentication failed 
@@ -1754,7 +2041,7 @@ Return codes:
 
 Usage:
 
- PLEASE NOT THAT BY DEFAULT, A PREFIX PIN IS REQUIRED.
+ PLEASE NOTE THAT BY DEFAULT, A PREFIX PIN IS REQUIRED.
 
  multiotp user [prefix PIN]OTP (check the OTP (with prefix PIN) of the user)
  multiotp -checkpam (to check with pam-script, using PAM_USER and PAM_AUTHTOK)
@@ -1765,9 +2052,9 @@ Usage:
  multiotp user [-chap-id=0x..] -chap-challenge=0x... -chap-password=0x...
    (the first byte of the chap-password value can contain the chap-id value)
 
- multiotp -fastcreate user [pin] (create a Google Auth compatible token)
- multiotp -fastcreatenopin user [pin] (create a user without a prefix PIN)
- multiotp -fastecreatewithpin user [pin] (create a user with a prefix PIN)
+ multiotp -fastcreate user [pin] (create a TOTP compatible token)
+ multiotp -fastcreatenopin user (create a user without a prefix PIN)
+ multiotp -fastcreatewithpin user [pin] (create a user with a prefix PIN)
  multiotp -createga user base32_seed [pin] (create Google Auth user with TOTP)
  multiotp -create user algo seed pin digits [pos|interval]
  multiotp -create -token-id user token-id pin
@@ -1793,10 +2080,14 @@ Usage:
  multiotp -import-xml xml_tokens_definition_file.xml (old Feitian)
  multiotp -import-sql tokens_definition_file.sql (ZyXEL/Authenex)
 
+ multiotp -iswithout2fa user (return 8 for WITHOUT2FA token, otherwise 7)
+
  multiotp -delete-token token
 
  multiotp -qrcode user png_file_name.png (only for TOTP and HOTP)
  multiotp -urllink user (only for TOTP and HOTP, generate provisioning URL)
+ multiotp -htmlinfo user htlm_file_name.html (create file for one user) or 
+ multiotp -htmlinfo htlm_file_folder (to create all files)
 
  multiotp -scratchlist user (generate & display scratch passwords for the user)
 
@@ -1829,11 +2120,14 @@ Usage:
                              (code result are also displayed on the console)
                debug-prefix: add a prefix when using the debug mode
                              (for example 'Reply-Message := ' for FreeRADIUS)
+         default-2fa-digits: [6-16] set the default amount of OTP digits
+         default-pin-digits: [4-32] set the default amount of PIN digits
  default-request-prefix-pin: [0|1] prefix PIN enabled/disabled by default
    default-request-ldap-pwd: [0|1] LDAP/AD password enabled/disabled by default
                 display-log: [0|1] enable/disable log display on the console
             group-attribute: attribute to return for the group membership
                              (for example 'Filter-Id' for FreeRADIUS)
+        ignore-no-prefix-cp: [0|1] Disable 'no prefix' for Credential Provider
                      issuer: default name of the issuer of the (soft) token
         ldap-account-suffix: LDAP/AD account suffix
              ldap-activated: [0|1] enable/disable LDAP/AD support
@@ -1843,6 +2137,7 @@ Usage:
      ldap-default-algorithm: [totp|hotp|motp|without2fa] default algorithm
                              for new LDAP/AD users
     ldap-domain-controllers: LDAP/AD domain controller(s), comma separated
+                ldap-filter: LDAP/AD filter customization (check documentation)
        ldap-group-attribute: LDAP/AD group attribute (default is memberOf)
    ldap-group-cn-identifier: LDAP/AD group cn identifier
                              (default is sAMAccountName for AD, cn for LDAP)
@@ -1850,27 +2145,30 @@ Usage:
        ldap-network-timeout: LDAP/AD network timeout (in seconds)
                   ldap-port: LDAP/AD port (default is set to 389)
        ldap-server-password: LDAP/AD server password
-           ldap-server-type: [1|2] LDAP/AD server type (1=AD, 2=standard LDAP)
+           ldap-server-type: [1|2|4] LDAP/AD server type
+                             (1=AD, 2=standard LDAP, 4=eDirectory)
                    ldap-ssl: [0|1] enable/disable LDAP/AD SSL connection
  ldap-synced-user-attribute: LDAP/AD attribute used as the account name
             ldap-time-limit: LDAP/AD number of sec. to wait for search results
               ldap-users-dn: LDAP/AD users DN (optional, use base-dn if empty)
                              (you can put several DN separated by semicolons)
-            ldaptls_reqcert: ['auto'|'never'|''|...] how to perform the LDAP TLS
+   ldap-without2fa-in-group: Special LDAP/AD group(s) for without2fa users
+            ldaptls-reqcert: ['auto'|'never'|''|...] how to perform the LDAP TLS
                              server certificate checks (LDAPTLS_REQCERT)
                              'auto' means 'never' for Windows and '' for Linux
-       ldaptls_cipher_suite: ['auto'|''|...] which cipher suite is used for the
+       ldaptls-cipher-suite: ['auto'|''|...] which cipher suite is used for the
                              LDAP TLS connection (LDAPTLS_CIPHER_SUITE)
                              'auto' means '' for PHP higher than 5.x and
                              'NORMAL:!VERS-TLS1.2' for PHP 5.x and before
                         log: [0|1] enable/disable log permanently
+         log-forced-in-file: [0|1] enable/disable log always in file (no DB)
             multiple-groups: [0|1] enable/disable multiple groups per user
     radius-reply-attributor: [ += |=] how to attribute a value
                              ('=' for TekRADIUS, ' += ' for FreeRADIUS)
      radius-reply-separator: [,|:|;|cr|crlf] returned attributes separator
                              ('crlf' for TekRADIUS, ',' for FreeRADIUS)
           self-registration: [1|0] enable/disable self-registration of tokens
-         server-cache-level: [1|0] enable/allow cache from server to client
+         server-cache-level: [1|0] enable/disable cache from server to client
       server-cache-lifetime: lifetime in seconds of the cached information
               server-secret: shared secret used for client/server operation
              server-timeout: timeout value for the connection to the server
@@ -1881,6 +2179,7 @@ Usage:
                  sms-api-id: SMS API id (if any, give your REST/XML API id)
                              with exec as provider, define the script to call
                                (available variables: %from, %to, %msg)
+                 sms-digits: [6-32] set the default amount of SMS digits
                      sms-ip: IP address of the SMS server (for inhouse server)
       sms-challenge-enabled: [0|1] enable/disable SMS challenge
                 sms-message: SMS message to display before the OTP
@@ -1888,8 +2187,8 @@ Usage:
                sms-password: SMS account password
                    sms-port: Port of the SMS server (for inhouse server)
                sms-provider: SMS provider (aspsms,clickatell,clickatell2,
-                             intellisms,nexmo,nowsms,smseagle,swisscom,custom,
-                             exec)
+                             intellisms,nexmo,nowsms,smseagle,swisscom,telnyx,
+                             custom,exec)
                 sms-userkey: SMS account username or userkey
 
 Custom SMS provider only
@@ -1920,6 +2219,8 @@ Custom SMS provider only
               sql-log-table: SQL log table, default is multiotp_log
            sql-tokens-table: SQL tokens table, default is multiotp_tokens
             sql-users-table: SQL users table, default is multiotp_users
+ sync-delete-retention-days: days of retention before deleting a no more
+                             existing AD/LDAP user (0=disable only, no delete)
    tel-default-country-code: Default country code for phone number
          text-sms-challenge: Text displayed for the SMS challenge
        text-token-challenge: Text displayed for the challenge
@@ -1931,7 +2232,7 @@ Custom SMS provider only
 
  multiotp -set user option1=value1 option2=value2 ... optionN=valueN
   options are  email: update the email of the user
-         cache-level: [1|0] enable/allow cache for this user on the client
+         cache-level: [1|0] enable/disable cache for this user on the client
       cache-lifetime: set/update lifetime in seconds of cached information
          description: set a description to the user, used for example during
                       the QRcode generation as the description of the account
@@ -1960,10 +2261,12 @@ Authentication parameters:
  -state=State
  -tag=Client-Shortname
 
+ -usersid=Windows SID of the user (provided by multiOTP Credential Provider)
+
 
 Client/server inline parameters:
 
- -server-cache-level=[1|0] enable/allow cache from server to client
+ -server-cache-level=[1|0] enable/disable cache from server to client
  -server-secret=shared secret used for client/server operation
  -server-timeout=timeout value for the connection to the server
  -server-url=full url of the server(s) for client/server mode
@@ -1977,6 +2280,9 @@ AD/LDAP integration:
  multiotp -ldap-users-list     : print the list of selected the AD/LDAP users
  multiotp -ldap-users-sync     : launch the AD/LDAP synchronization
                                  (will check first if a lock file is present)
+ multiotp -sync-delete-retention-days=days of retention before deleting a no
+                                      more existing AD/LDAP user
+                                      (0=disable only the user, do not delete)
 
 
 Backup/restore commands:
@@ -1989,7 +2295,8 @@ Backup/restore commands:
 Other information commands:
 
  multiotp -phpinfo         : print the current PHP version
- multiotp -showlog         : print the log file
+ multiotp -showlog         : print the log entries
+ multiotp -clearlog        : clear the log entries
  multiotp -tokenslist      : print the list of the tokens
  multiotp -userslist       : print the list of the users
  multiotp -lockeduserslist : print the list of the locked users
@@ -2006,6 +2313,12 @@ Special commands:
    This will delete the .cache files in the AD/LDAP cache folder.
    .cache files are used to speed up the AD/LDAP synchronizsation process.
    They are valid by default for 60 minutes.
+
+ multiotp -log-error "log information"
+   This will write "log information" error in the default log storage.
+
+ multiotp -log-info "log information"
+   This will write "log information" info in the default log storage.
 
 
 Other parameters:
@@ -2026,9 +2339,10 @@ Switches:
  -log            Log operation in the log subdirectory or in the database
                  (the permanent state of log can be set with -config log=1)
  -network-info   Display network info (mode, ip, mask, gateway, dns1, dns2)
+ -nt-key-only    Return ONLY NT_KEY to the radius server
  -param          All parameters are logged for debugging purposes
  -php-version    Display the current version of the running PHP interpreter
- -request-nt-key This will return the NT_KEY to the radius server
+ -request-nt-key Return NT_KEY with the other attributes to the radius server
  -status         Display a status bar during resynchronization
  -version        Display the current version of the library
 
@@ -2098,11 +2412,11 @@ multiOTP can be combined with a Raspberry Pi (http://www.raspberrypi.org/) in
 order to have a very low budget strong authentication device. Please look at
 the readme file in order to learn how to set it up in a few steps.
 The distribution is already optimized with an HTTP proxy to speed up the CLI.
-A ready to use binary image can be downloaded at http://download.multiotp.net/
+A ready to use binary image can be downloaded at https://download.multiOTP.net/
 
 multiOTP open source is also available as a ready to use virtual appliance in
 standard OVA, VMware optimized or Hyper-V formats.
-Virtual appliance images can be downloaded at http://download.multiotp.net/
+Virtual appliance images can be downloaded at https://download.multiOTP.net/
 
 multiOTP web service is working fine with any web server supporting PHP.
  - nginx is a light one under Linux and Windows (http://nginx.org/)
@@ -2130,9 +2444,9 @@ Some of other products and services based on multiOTP:
   Open-source One Time Password app for ownCloud (http://owncloud.org)
  UserCredential (https://github.com/cymapgt/UserCredential)
   Open-source authentication PHP library by Cyril Ogana
- multiOTP Pro 501V (https://www.multiOTP.com)
+ multiOTP Pro 501V (https://www.multiotp.com)
   Pro version virtual appliance, with full web GUI, 1 free user licence
- multiOTP Pro 420B (https://www.multiOTP.com)
+ multiOTP Pro 420B (https://www.multiotp.com)
   Pro version tiny hardware device (BeagleBone Black), with full web GUI
  multiOTP Enterprise (http:s//firmware.multiotp.com/enterprise/)
   Enterprise version virtual appliance, with HA master-slave support,
@@ -2148,8 +2462,8 @@ Visit https://forum.multiotp.net/ for additional support
 ``` 
  
 ``` 
-Hash verification for multiotp_5.6.1.5.zip 
-SHA256:9087aab3ac87a8eb31abea435b23108aaa436022e6329011d10a11c2659f8971 
-SHA1:6993c5c93bf39e73b9ae529c43fb6b3156c300ec 
-MD5:cf9e48e8ff30844a220f8c258440e404 
+Hash verification for multiotp_5.9.9.1.zip 
+SHA256:d391722d8c2fcf231773d0a0075a628cbbdfd10a3d78f9573ed663bede2ec32d 
+SHA1:4564e108a96d062b06979b5cf5e35dde30ca3ca6 
+MD5:0c9bc189ddc4e4a66ea5112636b683b2 
 ``` 

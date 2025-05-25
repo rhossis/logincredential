@@ -4,26 +4,26 @@
 Launcher for the multiOTP open source embedded CLI package
 
 multiOTP C++ launcher - Strong two-factor authentication solution
-http://www.multiotp.net
+https://www.multiotp.net
 
 Visit http://forum.multiotp.net/ for additional support.
 
-Donation are always welcome! Please check http://www.multiotp.net
+Donation are always welcome! Please check https://www.multiotp.net
 and you will find the magic button ;-)
 
 The multiOTP C++ launcher is simply used to launch PHP
 and run multiotp.windows.php with the provided arguments.
 
 @author    Andre Liechti, SysCo systemes de communication sa, <info@multiotp.net>
-@version   5.6.1.5
-@date      2019-10-23
+@version   5.9.9.1
+@date      2025-01-20
 @since     2016-12-08
-@copyright (c) 2010-2019 SysCo systemes de communication sa
+@copyright (c) 2010-2025 SysCo systemes de communication sa
 @copyright GNU Lesser General Public License
 
 LICENCE
 
-Copyright (c) 2010-2019 SysCo systemes de communication sa
+Copyright (c) 2010-2025 SysCo systemes de communication sa
 SysCo (tm) is a trademark of SysCo systemes de communication sa
 (http://www.sysco.ch)
 All rights reserved.

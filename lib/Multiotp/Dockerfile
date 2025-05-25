@@ -1,10 +1,10 @@
 ##########################################################################
 #
 # @file   Dockerfile
-# @brief  multiOTP open source docker image creator (based on Debian 8)
+# @brief  multiOTP open source docker image creator
 # 
 # multiOTP package - Strong two-factor authentication open source package
-# http://www.multiOTP.net/
+# https://www\.multiOTP.net/
 #
 # The multiOTP package is the lightest package available that provides so many
 # strong authentication functionalities and goodies, and best of all, for anyone
@@ -12,34 +12,42 @@
 #
 # This package is the result of a *LOT* of work. If you are happy using this
 # package, [Donation] are always welcome to support this project.
-# Please check http://www.multiOTP.net/ and you will find the magic button ;-)
+# Please check https://www\.multiOTP.net/ and you will find the magic button ;-)
 #
 # @author    Andre Liechti, SysCo systemes de communication sa, <info@multiotp.net>
-# @version   5.6.1.5
-# @date      2019-10-23
+# @version   5.9.9.1
+# @date      2025-01-20
 # @since     2013-11-29
-# @copyright (c) 2013-2018 by SysCo systemes de communication sa
+# @copyright (c) 2013-2025 SysCo systemes de communication sa
 # @copyright GNU Lesser General Public License
 #
 # docker build .
-# docker run --mount source=multiotp-data,target=/etc/multiotp -p 80:80 -p 443:443 -p 1812:1812/udp -p 1813:1813/udp -d xxxxxxxxxxxx
+# docker run -v [PATH/TO/MULTIOTP/DATA/VOLUME]:/etc/multiotp -v [PATH/TO/FREERADIUS/CONFIG/VOLUME]:/etc/freeradius -v [PATH/TO/MULTIOTP/LOG/VOLUME]:/var/log/multiotp -v [PATH/TO/FREERADIUS/LOG/VOLUME]:/var/log/freeradius -p [HOST WWW PORT NUMBER]:80 -p [HOST SSL PORT NUMBER]:443 -p [HOST RADIUS-AUTH PORT NUMBER]:1812/udp -p [HOST RADIUS-ACCNT PORT NUMBER]:1813/udp -d xxxxxxxxxxxx
 #
+# 2023-10-11 5.9.6.8 SysCo/al Debian Bookworm 12.0 support
+# 2022-05-08 5.8.8.4 SysCo/al Better docker support (also for Synology)
+# 2022-05-08 5.8.8.1 SysCo/al Raspberry Pi Bullseye 11.0 support
+# 2021-09-14 5.8.3.0 SysCo/al Debian Bullseye 11.0 support
+# 2021-05-19 5.8.2.3 SysCo/al Added php-bcmath
+# 2021-03-25 5.8.1.9 SysCo/al Remove apt-offline, which is not used
+# 2020-08-31 5.8.0.0 SysCo/al Debian Buster 10.5 support
 # 2019-10-22 5.6.1.3 SysCo/al Debian 10 support
 # 2019-01-07 5.4.1.1 SysCo/al Debian 9 support
 # 2018-03-20 5.1.1.2 SysCo/al Initial public Dockerfile release
 ##########################################################################
 
-FROM debian:10
-ENV DEBIAN 10
+FROM debian:12
+ENV DEBIAN 12
 ENV PHPINSTALLPREFIX php
-ENV PHPINSTALLPREFIXSQLITE php7.3
-ENV PHPVERSION 7.3
+ENV PHPINSTALLPREFIXVERSION php8.2
+ENV PHPVERSION 8.2
+ENV SQLITEVERSION sqlite3
 
 MAINTAINER Andre Liechti <andre.liechti@multiotp.net>
 LABEL Description="multiOTP open source, running on Debian ${DEBIAN} with PHP${PHPVERSION}." \
-      License="LGPLG-3.0" \
-      Usage="docker run --mount source=[SOURCE PERSISTENT VOLUME],target=/etc/multiotp -p [HOST WWW PORT NUMBER]:80 -p [HOST SSL PORT NUMBER]:443 -p [HOST RADIUS-AUTH PORT NUMBER]:1812/udp -p [HOST RADIUS-ACCNT PORT NUMBER]:1813/udp -d multiotp-open-source" \
-      Version="5.6.1.5"
+      License="LGPL-3.0" \
+      Usage="docker run -v [PATH/TO/MULTIOTP/DATA/VOLUME]:/etc/multiotp -v [PATH/TO/FREERADIUS/CONFIG/VOLUME]:/etc/freeradius -v [PATH/TO/MULTIOTP/LOG/VOLUME]:/var/log/multiotp -v [PATH/TO/FREERADIUS/LOG/VOLUME]:/var/log/freeradius -p [HOST WWW PORT NUMBER]:80 -p [HOST SSL PORT NUMBER]:443 -p [HOST RADIUS-AUTH PORT NUMBER]:1812/udp -p [HOST RADIUS-ACCNT PORT NUMBER]:1813/udp -d multiotp-open-source" \
+      Version="5.9.9.1"
 
 ARG DEBIAN_FRONTEND=noninteractive
 
@@ -54,7 +62,6 @@ RUN echo slapd slapd/internal/adminpw password rtzewrpiZRT753 | debconf-set-sele
 RUN apt-get update && \
     apt-get install -y \
     apache2-utils \
-    apt-offline \
     apt-utils \
     build-essential \
     bzip2 \
@@ -71,17 +78,18 @@ RUN apt-get update && \
     ntp \
     p7zip-full \
     php-pear \
+    ${PHPINSTALLPREFIX}-bcmath \
     ${PHPINSTALLPREFIX}-cgi \
     ${PHPINSTALLPREFIX}-dev \
     ${PHPINSTALLPREFIX}-fpm \
     ${PHPINSTALLPREFIX}-gd \
     ${PHPINSTALLPREFIX}-gmp \
     ${PHPINSTALLPREFIX}-ldap \
-    ${PHPINSTALLPREFIXSQLITE}-sqlite \
+    ${PHPINSTALLPREFIXVERSION}-${SQLITEVERSION} \
     slapd \
     snmp \
     snmpd \
-    sqlite \
+    ${SQLITEVERSION} \
     subversion \
     sudo \
     unzip \
@@ -101,7 +109,7 @@ COPY raspberry/boot-part/multiotp-tree /boot/multiotp-tree/
 # (if you want to build an image with the latest
 #  available version instead of the local one)
 #
-# RUN wget -q http://download.multiotp.net/multiotp.zip -O /tmp/multiotp.zip && \
+# RUN wget -q https://download.multiotp.net/multiotp.zip -O /tmp/multiotp.zip && \
 #     unzip -q -o /tmp/multiotp.zip -d /tmp/multiotp
 # 
 # RUN mv /tmp/multiotp/raspberry/boot-part/* /boot && \
@@ -112,8 +120,11 @@ COPY raspberry/boot-part/multiotp-tree /boot/multiotp-tree/
 WORKDIR /
 
 RUN chmod 777 /boot/*.sh && \
-    /boot/install.sh
+    /boot/install.sh && \
+    /boot/newvm.sh INIT
 
-EXPOSE 80/tcp 443/tcp 1812/udp 1813/udp 
+EXPOSE 80/tcp 443/tcp 1812/udp 1813/udp
 
-ENTRYPOINT /boot/newvm.sh
+VOLUME /etc/multiotp /etc/freeradius /var/log/multiotp /var/log/freeradius
+
+ENTRYPOINT /boot/newvm.sh RUNDOCKER

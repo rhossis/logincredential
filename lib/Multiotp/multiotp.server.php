@@ -4,11 +4,11 @@
  * @brief web service for the multiOTP class.
  *
  * multiOTP web service - Strong two-factor authentication PHP class
- * http://www.multiotp.net
+ * https://www.multiotp.net
  *
  * Visit http://forum.multiotp.net/ for additional support.
  *
- * Donation are always welcome! Please check http://www.multiotp.net
+ * Donation are always welcome! Please check https://www.multiotp.net
  * and you will find the magic button ;-)
  *
  * The multiOTP web service is simply merged with the multiOTP PHP class
@@ -24,20 +24,20 @@
  *    (http://httpd.apache.org/)
  *
  *
- * PHP 5.3.0 or higher is supported.
+ * PHP 5.4.0 or higher is supported.
  *
  * @author    Andre Liechti, SysCo systemes de communication sa, <info@multiotp.net>
- * @version   5.6.1.5
- * @date      2019-10-23
+ * @version   5.9.9.1
+ * @date      2025-01-20
  * @since     2013-08-06
- * @copyright (c) 2013-2019 SysCo systemes de communication sa
+ * @copyright (c) 2013-2025 SysCo systemes de communication sa
  * @copyright GNU Lesser General Public License
  *
  *//*
  *
  * LICENCE
  *
- *   Copyright (c) 2010-2019 SysCo systemes de communication sa
+ *   Copyright (c) 2010-2025 SysCo systemes de communication sa
  *   SysCo (tm) is a trademark of SysCo systemes de communication sa
  *   (http://www.sysco.ch)
  *   All rights reserved.
@@ -84,6 +84,10 @@
  *
  * Change Log
  *
+ *   2022-05-08 5.8.8.5 SysCo/al Scratchlist can be generated from the Web GUI
+ *   2021-03-25 5.8.1.9 SysCo/al Cookie privacy (httponly and secure) are now handled in the application directly
+ *                               Weak SSL ciphers disabled
+ *   2021-02-12 5.8.1.0 SysCo/al Web GUI update
  *   2019-01-24 5.4.1.5 SysCo/al If any, clean specific NTP DHCP option at every reboot
  *   2019-01-07 5.4.1.1 SysCo/al Raspberry Pi 3B+ support
  *   2018-08-21 5.3.0.0 SysCo/al without2FA algorithm added
@@ -134,6 +138,7 @@ $multiotp->ForceNoDisplayLog(); // No log on display as we are running a web ser
 if ('' != $multiotp_etc_dir) {
   $multiotp->SetLogFolder('/var/log/multiotp/');
   $multiotp->SetConfigFolder($multiotp_etc_dir.'/config/');
+  $multiotp->SetDdnsFolder($multiotp_etc_dir.'/ddns/');
   $multiotp->SetDevicesFolder($multiotp_etc_dir.'/devices/');
   $multiotp->SetGroupsFolder($multiotp_etc_dir.'/groups/');
   $multiotp->SetTokensFolder($multiotp_etc_dir.'/tokens/');
@@ -144,7 +149,7 @@ if ('' != $multiotp_etc_dir) {
 $multiotp->ReadConfigData();
 
 $data = isset($_POST['data'])?$_POST['data']:'';
-$method = substr(isset($_GET['method'])?$_GET['method']:(isset($_POST['method'])?$_POST['method']:''),0,255);
+$method = mb_substr(isset($_GET['method'])?$_GET['method']:(isset($_POST['method'])?$_POST['method']:''),0,255);
 $options = isset($_GET['options'])?$_GET['options']:(isset($_POST['options'])?$_POST['options']:'');
 $postdata = file_get_contents("php://input");
 
@@ -162,9 +167,9 @@ if (FALSE !== mb_strpos($data,'<multiOTP')) {
     $soap_server = new soap_server();
 
     $soap_service_name = "multiotp";
-    $soap_tns_namespace = 'http://www.multiotp.net/wsdl/multiotp/';
+    $soap_tns_namespace = 'https://www.multiotp.net/wsdl/multiotp/';
     $soap_endpoint_url = false;
-    $soap_schema_target_namespace = 'http://www.multiotp.net/wsdl/multiotp/';
+    $soap_schema_target_namespace = 'https://www.multiotp.net/wsdl/multiotp/';
     $soap_openotp_namespace = 'urn:openotp'; // urn:openotp
 
     // Create the WSDL 
@@ -306,6 +311,14 @@ if (FALSE !== mb_strpos($data,'<multiOTP')) {
     $soap_server->service($postdata);
     exit();
 } else {
+    // Secure and httponly cookie parameters forced in the application
+    $params = session_get_cookie_params();
+    $cookie_secure = (!$multiotp->IsDebugOption()) && (!$multiotp->IsDeveloperMode());
+    $cookie_httponly = true;
+    session_set_cookie_params($params["lifetime"],
+              $params["path"], $params["domain"],
+              $cookie_secure, $cookie_httponly
+             );
     session_start();
     $multiotp->SetHashSalt('AjaxH@shS@lt'); // Shared secret
     $hash_salt = $multiotp->GetHashSalt();
@@ -336,11 +349,11 @@ if (FALSE !== mb_strpos($data,'<multiOTP')) {
               $config_file = $multiotp->GetConfigFolder().date("YmdHis")."-".md5($_FILES['config_file']['tmp_name']).".cfg";
               if (move_uploaded_file($_FILES['config_file']['tmp_name'], $config_file)) {
 
-                if ($multiotp->RestoreConfiguration(array('backup_file' => $config_file, 'restore_key' => (isset($_POST['restore_config_password'])?trim($_POST['restore_config_password']):'')))) {
+                if ($multiotp->RestoreConfiguration(array('backup_file' => $config_file, 'restore_key' => (isset($_POST['restore_config_password'])?nullable_trim($_POST['restore_config_password']):'')))) {
 
                   // Clean Devices
                   foreach (explode("\t", $multiotp->GetDevicesList()) as $one_device) {
-                    if ('' != trim($one_device)) {
+                    if ('' != nullable_trim($one_device)) {
                       $multiotp->DeleteDevice($one_device);
                     }
                   }
@@ -357,7 +370,7 @@ if (FALSE !== mb_strpos($data,'<multiOTP')) {
 
                   // Clean Groups
                   foreach (explode("\t", $multiotp->GetGroupsList()) as $one_group) {
-                    if ('' != trim($one_group)) {
+                    if ('' != nullable_trim($one_group)) {
                       $multiotp->DeleteGroup($one_group);
                     }
                   }
@@ -374,7 +387,7 @@ if (FALSE !== mb_strpos($data,'<multiOTP')) {
 
                   // Clean Tokens
                   foreach (explode("\t", $multiotp->GetTokensList()) as $one_token) {
-                    if ('' != trim($one_token)) {
+                    if ('' != nullable_trim($one_token)) {
                       $multiotp->DeleteToken($one_token);
                     }
                   }
@@ -408,7 +421,7 @@ if (FALSE !== mb_strpos($data,'<multiOTP')) {
                     }
                   }
                   
-                  $multiotp->RestoreConfiguration(array('backup_file' => $config_file, 'restore_key' => (isset($_POST['restore_config_password'])?trim($_POST['restore_config_password']):'')));
+                  $multiotp->RestoreConfiguration(array('backup_file' => $config_file, 'restore_key' => (isset($_POST['restore_config_password'])?nullable_trim($_POST['restore_config_password']):'')));
                   
                   $_SESSION = array();
                   $_SESSION['logged'] = FALSE;
@@ -428,7 +441,7 @@ if (FALSE !== mb_strpos($data,'<multiOTP')) {
     if (isset($_FILES['token_file']['tmp_name'])) {
         if ((isset($_SESSION['logged']) && $_SESSION['logged'])) {
             if (file_exists($_FILES['token_file']['tmp_name']) && (UPLOAD_ERR_OK == $_FILES["token_file"]["error"])) {
-                $multiotp->ImportTokensFile($_FILES['token_file']['tmp_name'], $_FILES['token_file']['name'], isset($_POST['token_password'])?trim($_POST['token_password']):'');
+                $multiotp->ImportTokensFile($_FILES['token_file']['tmp_name'], $_FILES['token_file']['name'], isset($_POST['token_password'])?nullable_trim($_POST['token_password']):'');
             }
         }
         echo "DONE";
@@ -437,12 +450,13 @@ if (FALSE !== mb_strpos($data,'<multiOTP')) {
          * Basic web server *
          *********************/
          
-        $actual_date   = date('Y-m-d H:i:s');
-        $class_name    = $multiotp->GetClassName();
-        $class_version = $multiotp->GetVersion();
-        $class_date    = $multiotp->GetDate();
-        $rpi_serial    = $multiotp->GetRaspberryPiSerialNumber();
-        $rpi_info      = (('' != $rpi_serial)?"<br />\n        Raspberry Pi serial number: ".$rpi_serial."\n        ":'');
+        $actual_date     = date('Y-m-d H:i:s');
+        $class_name      = $multiotp->GetClassName();
+        $class_version   = $multiotp->GetVersion();
+        $class_date      = $multiotp->GetDate();
+        $rpi_serial      = $multiotp->GetRaspberryPiSerialNumber();
+        $rpi_info        = (('' != $rpi_serial)?"<br />\n        Raspberry Pi serial number: ".$rpi_serial."\n        ":'');
+        $server_software = (isset($_SERVER['SERVER_SOFTWARE']) ? $_SERVER['SERVER_SOFTWARE'].', ' : '')."PHP/".phpversion();
 
         $prefix_required0_checked = '';
         $prefix_required1_checked = '';
@@ -454,6 +468,14 @@ if (FALSE !== mb_strpos($data,'<multiOTP')) {
         else
         {
             $prefix_required0_checked = ' checked="checked" ';
+        }
+
+        if ($multiotp->CheckAdminPassword("1234")) {
+          $default_user_info = "(default is admin)";
+          $default_password_info = "(default is 1234)";
+        } else {
+          $default_user_info = "";
+          $default_password_info = "";
         }
 
         $webpage = <<<EOWEBPAGE
@@ -534,6 +556,15 @@ if (FALSE !== mb_strpos($data,'<multiOTP')) {
             .section_title a {
                 color: white;
                 text-decoration: none;
+            }
+            .synced {
+                color: #80ff80;
+            }
+            .locked {
+                color: #ff4040;
+            }
+            .delayed {
+                color: #ff8000;
             }
             /* Custom colors - END */
             /***********************/
@@ -718,6 +749,17 @@ if (FALSE !== mb_strpos($data,'<multiOTP')) {
                     window.open(full_url,'_blank');
                 }
             }
+
+            function PrintScratchlist(one_user)
+            {
+                if ('' != one_user)
+                {
+                    var http_params = "method=PrintScratchlist"+"&options="+encodeURIComponent(one_user);
+                    var full_url = url_page +'?'+http_params;
+                    window.open(full_url,'_blank');
+                }
+            }
+
             function ResyncUser(one_user)
             {
                 document.getElementById('resync_user').value = one_user;
@@ -1027,6 +1069,7 @@ if (FALSE !== mb_strpos($data,'<multiOTP')) {
             function UpdateUsersList()
             {
                 // Users
+                var userslist = 'No user yet...';
                 var counter = 0;
 
                 var remotecall = eval(RemoteCall('GetEnhancedUsersList'));
@@ -1057,32 +1100,64 @@ if (FALSE !== mb_strpos($data,'<multiOTP')) {
                             var usersinfo = enhancedusersarray[i].split('|');
                             // usersinfo[0] = username
                             // usersinfo[1] = s1|s0 (AD/LDAP synchronized or not)
+                            
+                            userclass = "";
 
-                            userslist = userslist + '<button type="button" onclick="DeleteUser(\''+usersinfo[0]+'\');">Delete</button>';
-                            userslist = userslist + '<button type="button" onclick="PrintQrCode(\''+usersinfo[0]+'\');">Print</button>';
-                            userslist = userslist + '<button type="button" onclick="ResyncUser(\''+usersinfo[0]+'\');">Resync</button>';
-                            
-                            userslist = userslist + ' ' + usersinfo[0];
-                            
-                            if ("s1" == usersinfo[1]) {
-                              userslist = userslist + ' ' + '<i>[auto]</i>';
+                            synced = ("s1" == usersinfo[1]);
+                            if (synced) {
+                                userclass="synced";
                             }
 
+                            locked = false;
                             for (var j = 0; j < lockedlistarray.length; j++) {
                                 if (usersinfo[0] == lockedlistarray[j]) {
-                                    userslist = userslist + ' (<a href="#" onclick="UnlockUser(\''+usersinfo[0]+'\');">unlock</a>)';
+                                    locked = true;
+                                    userclass="locked";
                                     break;
                                 }
                             }
-                            
+
+                            delayed = false;
+                            delayed_time = 0;
                             for (var j = 0; j < delayedlistarray.length; j++) {
                                 var delayinfo = delayedlistarray[j].split('|');
 
                                 if (usersinfo[0] == delayinfo[0]) {
-                                    var delay_end = new Date( delayinfo[1] * 1000 );
-                                    userslist = userslist + ' (delayed until ' + delay_end.toLocaleDateString() + ' ' + delay_end.toLocaleTimeString() + ', <a href="#" onclick="UnlockUser(\''+usersinfo[0]+'\');">unlock</a>)';
+                                    delayed_time = delayinfo[1];
+                                    delayed = true;
+                                    userclass="delayed";
                                     break;
                                 }
+                            }
+
+                            userslist = userslist + '<button type="button" onclick="DeleteUser(\''+usersinfo[0]+'\');">Delete</button>';
+                            userslist = userslist + '<button type="button" onclick="PrintQrCode(\''+usersinfo[0]+'\');">Print</button>';
+                            userslist = userslist + '<button type="button" onclick="PrintScratchlist(\''+usersinfo[0]+'\');">Scratchlist</button>';
+                            userslist = userslist + '<button type="button" onclick="ResyncUser(\''+usersinfo[0]+'\');">Resync</button>';
+
+                            userslist = userslist + ' ';
+
+                            if (userclass != '') {
+                                userslist = userslist + '<span class="' + userclass + '">';
+                            }
+
+                            userslist = userslist + usersinfo[0];
+                            
+                            if (synced) {
+                              userslist = userslist + ' ' + '[AD/LDAP]';
+                            }
+
+                            if (locked) {
+                                userslist = userslist + ' (locked, <a href="#" onclick="UnlockUser(\''+usersinfo[0]+'\');">unlock</a>)';
+                            }
+                            
+                            if (delayed) {
+                                var delay_end = new Date(delayed_time * 1000 );
+                                userslist = userslist + ' (delayed until ' + delay_end.toLocaleDateString() + ' ' + delay_end.toLocaleTimeString() + ', <a href="#" onclick="UnlockUser(\''+usersinfo[0]+'\');">unlock</a>)';
+                            }
+
+                            if (userclass != '') {
+                                userslist = userslist + '</span>';
                             }
 
                             userslist = userslist + '<br />';
@@ -1123,14 +1198,14 @@ if (FALSE !== mb_strpos($data,'<multiOTP')) {
             <br />
             <br />
         </div -->
-        Web service is ready $actual_date
-        $rpi_info<hr />
+Web service is ready $actual_date, $server_software
+$rpi_info<hr />
         <div id="login_section">
         <form>
             <div id="package_info_section">
                 This package is the result of a *bunch* of work. If you find this package useful, <a target="_blank" href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=B78FJAH6RBNZ2">[Donation]</a> are always welcome to support this project.
                 <br />
-                Please check <a target="_blank" href="http://www.multiOTP.net/">http://www.multiOTP.net/</a> and you will find the magic button ;-)
+                Please check <a target="_blank" href="https://www.multiotp.net/">https://www.multiotp.net/</a> and you will find the magic button ;-)
 				<br />
 				Visit <a target="_blank" href="http://forum.multiotp.net/">http://forum.multiotp.net/</a> for additional support.
                 <hr />
@@ -1138,15 +1213,15 @@ if (FALSE !== mb_strpos($data,'<multiOTP')) {
             </div>
             <hr />
             <div class="section_title" id="login_title"><span id="login_text">Login</span></div>
-            Username: <input type=text" onfocus="this.blur();" name="user" id="user" length="20" value="admin" /> (default is admin)
-            <span id="log_info"></span><span id="logged"></span>
+            Username: <input type=text" name="user" id="user" length="20" value="" /> $default_user_info
             <br />
-            Password: <input type="password" onfocus="this.value='';" name="password" id="password" length="20" value="1234" /> (default is 1234)
-            &nbsp;
+            Password: <input type="password" onfocus="this.value='';" name="password" id="password" length="20" value="" /> $default_password_info
+            <br />
             <span id="login"><button type="button" onclick="Login();" >Login</button></span>
         </form>
         </div>
         <div id="logout_section">
+        <div id="log_info"></span><span id="logged"></div>
         <form>
             <span id="logout"><button type="button" onclick="Logout();">Logout</button></span>
         </form>
@@ -1445,16 +1520,16 @@ EOWEBPAGE;
         $infoweb_filename = "infoweb.html";
         if (file_exists($multiotp->GetConfigFolder().$infoweb_filename)) {
             if ($infoweb_handler = @fopen($multiotp->GetConfigFolder().$infoweb_filename, "rt")) {
-                $infoweb = trim(fgets($infoweb_handler));
+                $infoweb = nullable_trim(fgets($infoweb_handler));
                 fclose($infoweb_handler);
             }
         }
-        if (trim($infoweb == "")) {
+        if (nullable_trim($infoweb == "")) {
             $infoweb = <<<EOI
 <i>
     Are you interested in additional features like automatic syncronization of AD/LDAP users, provisioning PDF automatic email distribution, API automation, HA in master-slave mode and many others, everything through an easy and fast web interface ?
     <br />
-    Check out our commercial editions here: <a target="_blank" href="http://www.multiotp.com/">http://www.multiotp.com/</a>
+    Check out our commercial editions here: <a target="_blank" href="https://www.multiOTP.com/">https://www.multiOTP.com/</a>
 </i>
 EOI;
         }
@@ -1487,22 +1562,22 @@ EOI;
 
         if (!isset($_SESSION['random_salt']))
         {
-            $random_salt = substr(md5(time()."@".rand(100000,999999)),0,12);
+            $random_salt = mb_substr(md5(time()."@".rand(100000,999999)),0,12);
             $_SESSION['random_salt'] = $random_salt;
         }
         $multiotp->SetRandomSalt($_SESSION['random_salt']);
         
         $ajax_result = "false";
 
-        switch (mb_strtoupper($method))
+        switch (mb_strtoupper($method,'UTF-8'))
         {
-            case mb_strtoupper("GetRandomSalt"):
+            case mb_strtoupper("GetRandomSalt",'UTF-8'):
                 $ajax_result = $multiotp->GetRandomSalt();
                 break;
-            case mb_strtoupper("Login"):
+            case mb_strtoupper("Login",'UTF-8'):
                 $result = FALSE;
-                $username = substr(isset($options_array[0])?$options_array[0]:'',0,255);
-                $password = substr(isset($options_array[1])?$options_array[1]:'',0,255);
+                $username = mb_substr(isset($options_array[0])?$options_array[0]:'',0,255);
+                $password = mb_substr(isset($options_array[1])?$options_array[1]:'',0,255);
                 if ('admin' == $username) {
                     $result = $multiotp->CheckAdminPasswordHashWithRandomSalt($password);
                 }
@@ -1510,7 +1585,7 @@ EOI;
                 if ($result) {
                     $_SESSION['logged'] = TRUE;
                     /* And we change the random_salt to avoid a second login with the same previous hash */
-                    $random_salt = substr(md5(time()."@".rand(100000,999999)),0,12);
+                    $random_salt = mb_substr(md5(time()."@".rand(100000,999999)),0,12);
                     $_SESSION['random_salt'] = $random_salt;
                     $multiotp->SetRandomSalt($random_salt);
                     $ajax_result = "true";
@@ -1526,22 +1601,22 @@ EOI;
                     /*******************************************************
                      * The next methods are allowed only if we are logged in
                      *******************************************************/
-                    switch (mb_strtoupper($method))
+                    switch (mb_strtoupper($method,'UTF-8'))
                     {
-                        case mb_strtoupper("DeleteUser"):
+                        case mb_strtoupper("DeleteUser",'UTF-8'):
                             $ajax_result = $multiotp->DeleteUser($options_array[0]);
                             break;
-                        case mb_strtoupper("DeleteToken"):
+                        case mb_strtoupper("DeleteToken",'UTF-8'):
                             $ajax_result = $multiotp->DeleteToken($options_array[0]);
                             break;
-                        case mb_strtoupper("FastCreateUser"):
-                            $user              = trim((isset($options_array[0])?$options_array[0]:''));
-                            $email             = trim((isset($options_array[1])?$options_array[1]:''));
-                            $sms               = trim((isset($options_array[2])?$options_array[2]:''));
+                        case mb_strtoupper("FastCreateUser",'UTF-8'):
+                            $user              = nullable_trim((isset($options_array[0])?$options_array[0]:''));
+                            $email             = nullable_trim((isset($options_array[1])?$options_array[1]:''));
+                            $sms               = nullable_trim((isset($options_array[2])?$options_array[2]:''));
                             $prefix_pin_needed = intval(isset($options_array[3])?$options_array[3]:$multiotp->GetDefaultRequestPrefixPin());
                             $algorithm         = (isset($options_array[4])?$options_array[4]:"totp");
                             $pin               = (isset($options_array[5])?$options_array[5]:'');
-                            $token_serial      = trim((isset($options_array[6])?$options_array[6]:''));
+                            $token_serial      = nullable_trim((isset($options_array[6])?$options_array[6]:''));
                             if ('' != $token_serial) {
                                 $ajax_result = $multiotp->CreateUserFromToken($user, $token_serial, $email, $sms, $pin, $prefix_pin_needed);
                             }
@@ -1553,29 +1628,33 @@ EOI;
                                 $multiotp->WriteConfigData();
                             }
                             break;
-                        case mb_strtoupper("GetFullVersionInfo"):
+                        case mb_strtoupper("GetFullVersionInfo",'UTF-8'):
                             $ajax_result = $multiotp->GetFullVersionInfo();
                             break;
-                        case mb_strtoupper("GetTokensList"):
+                        case mb_strtoupper("GetTokensList",'UTF-8'):
                             $ajax_result = $multiotp->GetTokensList();
                             break;
-                        case mb_strtoupper("GetUsersList"):
+                        case mb_strtoupper("GetUsersList",'UTF-8'):
                             $ajax_result = $multiotp->GetUsersList();
                             break;
-                        case mb_strtoupper("GetDelayedUsersList"):
+                        case mb_strtoupper("GetDelayedUsersList",'UTF-8'):
                             $ajax_result = $multiotp->GetDelayedUsersList();
                             break;
-                        case mb_strtoupper("GetLockedUsersList"):
+                        case mb_strtoupper("GetLockedUsersList",'UTF-8'):
                             $ajax_result = $multiotp->GetLockedUsersList();
                             break;
-                        case mb_strtoupper("GetEnhancedUsersList"):
+                        case mb_strtoupper("GetEnhancedUsersList",'UTF-8'):
                             $ajax_result = $multiotp->GetEnhancedUsersList();
                             break;
-                        case mb_strtoupper("PrintQrCode"):
+                        case mb_strtoupper("PrintQrCode",'UTF-8'):
                             echo $multiotp->GenerateHtmlQrCode($options_array[0]);
                             $ajax_result = '';
                             break;
-                        case mb_strtoupper("ResyncUser"):
+                        case mb_strtoupper("PrintScratchlist",'UTF-8'):
+                            echo $multiotp->GenerateHtmlScratchlist($options_array[0]);
+                            $ajax_result = '';
+                            break;
+                        case mb_strtoupper("ResyncUser",'UTF-8'):
                             $ajax_result = "false";
                             if ($multiotp->ReadUserData($options_array[0])) {
                                 $result = $multiotp->CheckToken($options_array[1], $options_array[2]);
@@ -1584,7 +1663,7 @@ EOI;
                                 }
                             }
                             break;
-                        case mb_strtoupper("CheckToken"):
+                        case mb_strtoupper("CheckToken",'UTF-8'):
                             $ajax_result = '21 '.$multiotp->GetErrorText(21);
                             if ($multiotp->ReadUserData($options_array[0]))
                             {
@@ -1599,10 +1678,10 @@ EOI;
                                 }
                             }
                             break;
-                        case mb_strtoupper("BackupConfig"):
+                        case mb_strtoupper("BackupConfig",'UTF-8'):
                             $tmp  = '/tmp';
                             if (!file_exists($tmp)) {
-                                $tmp = $multiotp->ConvertToWindowsPathIfNeeded($multiotp->GetScriptFolder()."../_temp");
+                              $tmp = $multiotp->ConvertToWindowsPathIfNeeded(sys_get_temp_dir());
                             }
                             $backup_file_name = "multiotp-".date('Y-m-d-His').".cfg";
                             $backup_config_file = "$tmp/$backup_file_name";
@@ -1639,7 +1718,7 @@ EOI;
                                 echo "*** BACKUP ERROR ***";
                             }
                             break;
-                        case mb_strtoupper("SetAdminPasswordHash"):
+                        case mb_strtoupper("SetAdminPasswordHash",'UTF-8'):
                             if ($multiotp->IsDemoMode())
                             {
                                 $result = "false";
@@ -1650,10 +1729,10 @@ EOI;
                                 $multiotp->WriteConfigData();
                             }
                             break;
-                        case mb_strtoupper("UnlockUser"):
+                        case mb_strtoupper("UnlockUser",'UTF-8'):
                             $ajax_result = $multiotp->UnlockUser($options_array[0]);
                             break;
-                        case mb_strtoupper("UserLoggedIn"):
+                        case mb_strtoupper("UserLoggedIn",'UTF-8'):
                             $ajax_result = "true"; //User is logged if code arrives here!
                             break;
                         default:
