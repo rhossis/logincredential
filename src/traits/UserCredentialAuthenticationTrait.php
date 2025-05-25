@@ -1,5 +1,5 @@
 <?php
-namespace rhossis\core\application\authentication\UserCredential\traits;
+namespace rhossis\logincredential\traits;
 
 use rhossis\Exception\UserCredentialException;
 

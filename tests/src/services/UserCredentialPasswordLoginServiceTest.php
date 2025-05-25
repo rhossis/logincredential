@@ -1,8 +1,8 @@
 <?php
 
-namespace rhossis\core\application\authentication\UserCredential\services;
+namespace rhossis\logincredential\services;
 
-use rhossis\core\application\authentication\UserCredential\abstractclass\MultiotpWrapper;
+use rhossis\logincredential\abstractclass\MultiotpWrapper;
 use JJG\Ping;
 
 /**
@@ -16,7 +16,7 @@ class UserCredentialPasswordLoginServiceTest extends \PHPUnit\Framework\TestCase
     protected $object;
     
     /**
-     * @var tstring
+     * @var string
      */
     protected $password;
     
@@ -49,7 +49,7 @@ class UserCredentialPasswordLoginServiceTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * @covers rhossis\core\application\authentication\UserCredential\services\UserCredentialPasswordLoginService::initialize
+     * @covers rhossis\logincredential\services\UserCredentialPasswordLoginService::initialize
      */
     public function testInitialize() {
         //username of authenticating user
@@ -66,7 +66,7 @@ class UserCredentialPasswordLoginServiceTest extends \PHPUnit\Framework\TestCase
     }
     
     /**
-     * @covers rhossis\core\application\authentication\UserCredential\services\UserCredentialPasswordLoginService::initialize
+     * @covers rhossis\logincredential\services\UserCredentialPasswordLoginService::initialize
      */
     public function testInitializeException() {
         $this->expectException('\rhossis\Exception\UserCredentialException');
@@ -77,7 +77,7 @@ class UserCredentialPasswordLoginServiceTest extends \PHPUnit\Framework\TestCase
     } 
 
     /**
-     * @covers rhossis\core\application\authentication\UserCredential\services\UserCredentialPasswordLoginService::authenticate
+     * @covers rhossis\logincredential\services\UserCredentialPasswordLoginService::authenticate
      */
     public function testAuthenticateNative() {
         //test authentication where user has input the correct password
@@ -94,7 +94,7 @@ class UserCredentialPasswordLoginServiceTest extends \PHPUnit\Framework\TestCase
     /**
      * This tests that without proper initialization of LDAP settings, a UserCredentialException will be thrown. 
      * 
-     * @covers rhossis\core\application\authentication\UserCredential\services\UserCredentialPasswordLoginService::authenticate
+     * @covers rhossis\logincredential\services\UserCredentialPasswordLoginService::authenticate
      */
     public function testInitializeLdapException() {
         $this->expectException('\rhossis\Exception\UserCredentialException');
@@ -111,7 +111,7 @@ class UserCredentialPasswordLoginServiceTest extends \PHPUnit\Framework\TestCase
      * LDAP settings must be initialized, then authentication can proceed. The below example uses the MultiOTP
      * LDAP auth functionality. If the remote LDAP configured cannot be pinged, this test will be skipped
      * 
-     * @covers rhossis\core\application\authentication\UserCredential\services\UserCredentialPasswordLoginService::authenticate
+     * @covers rhossis\logincredential\services\UserCredentialPasswordLoginService::authenticate
      */
     public function testAuthenticateLdap() {
         //the LDAP server

@@ -1,7 +1,7 @@
 <?php
-namespace rhossis\core\application\authentication\UserCredential\traits;
+namespace rhossis\logincredential\traits;
 
-use rhossis\core\application\authentication\UserCredential\abstractclass\MultiotpWrapper;
+use rhossis\logincredential\abstractclass\MultiotpWrapper;
 use rhossis\Exception\UserCredentialException;
 
 /**

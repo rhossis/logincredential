@@ -9,12 +9,12 @@
         ],
         "psr-4" : {
             "rhossis\\Exception\\" : "src/Exception",
-            "rhossis\\core\\application\\authentication\\UserCredential\\" : "src"
+            "rhossis\\logincredential\\" : "src"
         }
     },
     "autoload-dev" : {
         "psr-4" : {
-            "rhossis\\core\\application\\authentication\\UserCredential\\tests\\" : "tests"
+            "rhossis\\logincredential\\tests\\" : "tests"
         }
     },
     "name" : "rhossis/usercredential",

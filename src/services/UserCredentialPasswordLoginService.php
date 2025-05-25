@@ -1,9 +1,9 @@
 <?php
-namespace rhossis\core\application\authentication\UserCredential\services;
+namespace rhossis\logincredential\services;
 
 use rhossis\Exception\UserCredentialException;
-use rhossis\core\application\authentication\UserCredential\abstractclass\UserCredentialAuthenticationInterface;
-use rhossis\core\application\authentication\UserCredential\traits\UserCredentialAuthenticationTrait;
+use rhossis\logincredential\abstractclass\UserCredentialAuthenticationInterface;
+use rhossis\logincredential\traits\UserCredentialAuthenticationTrait;
     
 /**
  * UserCredentialPasswordLoginService

@@ -1,5 +1,5 @@
 <?php
-namespace rhossis\core\application\authentication\UserCredential\traits;
+namespace rhossis\logincredential\traits;
 
 /**
  * Trait for authenticating using PHP's native password_hash and password_verify

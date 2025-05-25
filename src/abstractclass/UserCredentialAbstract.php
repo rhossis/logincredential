@@ -1,5 +1,5 @@
 <?php
-namespace rhossis\core\application\authentication\UserCredential\abstractclass;
+namespace rhossis\logincredential\abstractclass;
 
 use rhossis\Exception\UserCredentialException;
 use Phpass\Strength;

@@ -1,8 +1,8 @@
 <?php
-namespace rhossis\core\application\authentication\UserCredential\services;
+namespace rhossis\logincredential\services;
 
 use rhossis\Exception\UserCredentialException;
-use rhossis\core\application\authentication\UserCredential\abstractclass\MultiotpWrapper;
+use rhossis\logincredential\abstractclass\MultiotpWrapper;
 
 /**
  * UserCredentialGoogleAuthLoginService
