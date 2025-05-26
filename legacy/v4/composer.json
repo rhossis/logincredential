@@ -1,0 +1,44 @@
+{
+    "keywords": [
+        "User Authentication"
+    ],
+    "autoload" : {        
+        "files" : [
+            "src/config/NamedConstant.php",
+            "lib/Multiotp/multiotp.class.php"
+        ],
+        "psr-4" : {
+            "rhossis\\Exception\\" : "src/Exception",
+            "rhossis\\logincredential\\" : "src"
+        }
+    },
+    "autoload-dev" : {
+        "psr-4" : {
+            "rhossis\\logincredential\\tests\\" : "tests"
+        }
+    },
+    "name" : "rhossis/usercredential",
+    "type" : "library",
+    "description" : "Package for Password authentication policy management",
+    "license" : "BSD-3-clause",
+    "require" : {
+        "php" : ">=7.3.0",
+        "cymapgt/phpass" : "^8.0.0",
+        "freedsx/ldap" : "*"
+    },
+    "require-dev" : {
+        "phpunit/phpunit" : "9.*",
+        "geerlingguy/ping" : "*"
+    },
+    "support" : {
+        "email" : "cogana@gmail.com",
+        "source" : "https://github.com/rhossis/UserCredential"
+    },
+    "authors" : [{
+        "name" : "Cyril Ogana",
+        "email" : "cogana@gmail.com",
+        "homepage" : "http://www.github.com/rhossis",
+        "role" : "Maintainer"        
+    }],
+    "homepage" : "https://github.com/rhossis/UserCredential"
+}
